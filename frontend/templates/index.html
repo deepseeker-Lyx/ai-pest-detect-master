@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" id="viewportMeta" />
+  <script>
+    (function(){
+      var ua = navigator.userAgent;
+      // 手机端不调整
+      if (/Mobile|Android|iPhone|iPad|iPod|Windows Phone|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return;
+      var scale = 1.0;
+      if (ua.indexOf('Firefox') !== -1) {
+        scale = 0.7;
+      } else if (ua.indexOf('Chrome') !== -1 && ua.indexOf('Edg') === -1) {
+        scale = 0.75;
+      }
+      if (scale !== 1.0) {
+        var meta = document.getElementById('viewportMeta');
+        meta.setAttribute('content', 'width=device-width, initial-scale=' + scale + ', maximum-scale=' + scale + ', user-scalable=no, viewport-fit=cover');
+      }
+    })();
+  </script>
+  <title>农作物害虫智能检测系统</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=multi-pest-2" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════════════ -->
+<header class="app-header">
+  <div class="header-inner">
+    <img src="/static/img/logo.png" alt="logo" class="header-logo" />
+    <div class="header-text">
+      <h1>YOLOv11 害虫智能识别</h1>
+      <p>知识蒸馏 · 轻量高效 · 精准识别</p>
+    </div>
+    <button class="header-icon-btn" id="historyBtn" title="历史记录">
+      <i class="fa-solid fa-chart-column"></i>
+    </button>
+    <div class="header-badge">湘 · 智检</div>
+  </div>
+</header>
+
+<!-- ═══════════════════════ MAIN ══════════════════════════════════ -->
+<main class="chat-container">
+
+  <!-- 对话消息区域 -->
+  <div class="messages-area" id="messagesArea">
+    <!-- 初始状态：大按钮上传区 -->
+    <div class="upload-hero" id="uploadHero">
+      <div class="upload-hero-icon">
+        <i class="fa-solid fa-camera"></i>
+      </div>
+      <h2 class="upload-hero-title">YOLOv11 精准识别</h2>
+      <p class="upload-hero-subtitle">知识蒸馏轻量化 · 精准识别 16 类水稻害虫</p>
+
+      <button class="btn-hero-camera" id="heroCamera">
+        <i class="fa-solid fa-camera"></i>
+        拍照识别
+      </button>
+      <button class="btn-hero-upload" id="heroUpload">
+        <i class="fa-solid fa-image"></i>
+        上传图片
+      </button>
+
+      <div class="upload-hero-features">
+        <div class="feature-badge">
+          <i class="fa-solid fa-brain"></i> 知识蒸馏
+        </div>
+        <div class="feature-badge">
+          <i class="fa-solid fa-crosshairs"></i> 高精度识别
+        </div>
+        <div class="feature-badge">
+          <i class="fa-solid fa-comments"></i> 智能问答
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 输入区域 - 初始隐藏 -->
+  <div class="input-area" id="inputArea" style="display: none;">
+    <button class="btn-attach" id="cameraBtn" title="拍照">
+      <i class="fa-solid fa-camera"></i>
+    </button>
+    <button class="btn-attach" id="uploadBtn" title="选择图片">
+      <i class="fa-solid fa-paperclip"></i>
+    </button>
+    <input type="text" id="messageInput" placeholder="问我关于害虫的问题..." autocomplete="off" />
+    <button class="btn-send" id="sendBtn" title="发送">
+      <i class="fa-solid fa-paper-plane"></i>
+    </button>
+  </div>
+
+  <!-- 隐藏的文件输入 -->
+  <input type="file" id="fileInput" accept="image/*" hidden />
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden />
+
+</main>
+
+<!-- 图片预览遮罩层 -->
+<div class="image-preview-overlay" id="imagePreviewOverlay">
+  <button class="close-preview" id="closePreview">&times;</button>
+  <img id="previewImage" src="" alt="预览" />
+</div>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════════════ -->
+<footer class="app-footer">
+  <p>© 2026 农作物害虫智能检测系统 &nbsp;|&nbsp; 🌶 守护三湘四水 · 助力湖南农业 &nbsp;|&nbsp; YOLO v11 &nbsp;|&nbsp; <a href="/docs" target="_blank">API 文档</a></p>
+</footer>
+
+<script src="/static/js/app.js?v=multi-pest-2"></script>
+</body>
+</html>

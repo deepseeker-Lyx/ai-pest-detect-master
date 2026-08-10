@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" id="viewportMeta" />
+  <script>
+    (function(){
+      var ua = navigator.userAgent;
+      // 手机端不调整
+      if (/Mobile|Android|iPhone|iPad|iPod|Windows Phone|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return;
+      var scale = 1.0;
+      if (ua.indexOf('Firefox') !== -1) {
+        scale = 0.7;
+      } else if (ua.indexOf('Chrome') !== -1 && ua.indexOf('Edg') === -1) {
+        scale = 0.75;
+      }
+      if (scale !== 1.0) {
+        var meta = document.getElementById('viewportMeta');
+        meta.setAttribute('content', 'width=device-width, initial-scale=' + scale + ', maximum-scale=' + scale + ', user-scalable=no, viewport-fit=cover');
+      }
+    })();
+  </script>
+  <title>农作物害虫智能检测系统</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #0671AD;
+      --accent-green: #16a085;
+    }
+    body {
+      font-family: "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #045c88 0%, var(--primary) 50%, #16a085 100%);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      padding: 20px;
+    }
+    .loader {
+      width: 60px;
+      height: 60px;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 2s linear infinite;
+      margin-bottom: 24px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    p {
+      font-size: 14px;
+      opacity: 0.85;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .progress-track {
+      width: 300px;
+      max-width: 80vw;
+    }
+    .progress-segs {
+      display: flex;
+      gap: 3px;
+      height: 8px;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    .progress-segs .seg {
+      flex: 1;
+      height: 100%;
+      background: rgba(255,255,255,0.15);
+      border-radius: 2px;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .progress-segs .seg.done {
+      background: #fff;
+      box-shadow: 0 0 6px rgba(255,255,255,0.3);
+    }
+    .progress-segs .seg.pulsing {
+      background: rgba(255,255,255,0.6);
+      box-shadow: 0 0 10px rgba(255,255,255,0.5);
+      animation: pulse 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes pulse {
+      from { opacity: 0.6; transform: scaleY(0.8); }
+      to   { opacity: 1;   transform: scaleY(1); }
+    }
+    .progress-pct {
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .status-text {
+      font-size: 13px;
+      opacity: 0.7;
+    }
+    .steps {
+      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 260px;
+      max-width: 80vw;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      opacity: 0.5;
+      transition: opacity 0.5s ease;
+    }
+    .step.active {
+      opacity: 1;
+    }
+    .step.done {
+      opacity: 0.7;
+    }
+    .step .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      flex-shrink: 0;
+    }
+    .step.active .dot {
+      background: #fff;
+      box-shadow: 0 0 8px rgba(255,255,255,0.5);
+    }
+    .step.done .dot {
+      background: #fff;
+    }
+    .hunan-tag {
+      margin-top: 48px;
+      font-size: 12px;
+      opacity: 0.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="loader"></div>
+  <h1>🌾 农作物害虫智能检测系统</h1>
+  <p>正在加载 AI 模型，请稍候...</p>
+  <div class="progress-track">
+    <div class="progress-pct" id="loadingPct">0%</div>
+    <div class="progress-segs" id="loadingSegs"></div>
+  </div>
+  <div class="status-text" id="statusText">正在加载 YOLO 模型...</div>
+
+  <div class="steps" id="stepContainer">
+    <div class="step active" data-step="0">
+      <span class="dot"></span> 加载 YOLO 目标检测模型
+    </div>
+    <div class="step" data-step="1">
+      <span class="dot"></span> 初始化语义知识库
+    </div>
+    <div class="step" data-step="2">
+      <span class="dot"></span> 启动 AI 防治助手
+    </div>
+  </div>
+
+  <div class="hunan-tag">🌶 守护三湘四水 · 助力湖南农业</div>
+
+  <script>
+    // ── 指数衰减进度条（双速分离） ──────────────────────────
+    // 原理同 app.js：快速算目标（60fps）+ 慢速显示（一格一跳）
+    const MAX_PCT = 0.88;
+    const TAU = 25;
+    const SEG_COUNT = 30;
+    const SEG_INTERVAL_MS = 200;   // 每格 200ms
+    const MIN_SPLASH_MS = 2500;
+    const startTime = Date.now();
+
+    // 步骤阈值（基于竖条数）
+    const STEP_THRESHOLDS = [
+      { maxSeg: Math.round(0.30 * SEG_COUNT), label: '正在加载 YOLO 模型...' },
+      { maxSeg: Math.round(0.65 * SEG_COUNT), label: '正在初始化语义知识库...' },
+      { maxSeg: Math.round(0.88 * SEG_COUNT), label: '正在启动 AI 防治助手...' },
+    ];
+
+    // 创建竖条
+    const segsContainer = document.getElementById('loadingSegs');
+    for (let i = 0; i < SEG_COUNT; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'seg';
+      segsContainer.appendChild(seg);
+    }
+
+    const statusText = document.getElementById('statusText');
+    const steps = document.querySelectorAll('.step');
+    const pctEl = document.getElementById('loadingPct');
+    const segs = segsContainer.children;
+    let displayedSegs = 0;
+    let targetSegs = 0;
+    let frameId = null;
+    let timerId = null;
+    let isComplete = false;
+
+    function render() {
+      const n = Math.min(displayedSegs, SEG_COUNT);
+
+      // 竖条
+      for (let i = 0; i < SEG_COUNT; i++) {
+        segs[i].className = i < n ? 'seg done' : (i === n && n < SEG_COUNT ? 'seg pulsing' : 'seg');
+      }
+
+      // 百分比
+      pctEl.textContent = `${Math.round((n / SEG_COUNT) * 100)}%`;
+
+      // 步骤
+      let stepIdx = 0;
+      for (let i = STEP_THRESHOLDS.length - 1; i >= 0; i--) {
+        if (n >= STEP_THRESHOLDS[i].maxSeg) { stepIdx = i; break; }
+      }
+      steps.forEach((s, i) => {
+        s.className = 'step';
+        if (i < stepIdx) s.classList.add('done');
+        else if (i === stepIdx) s.classList.add('active');
+      });
+      if (stepIdx < STEP_THRESHOLDS.length) {
+        statusText.textContent = STEP_THRESHOLDS[stepIdx].label;
+      }
+    }
+
+    // 快速 tick（60fps）→ 只算目标值
+    function tick() {
+      if (isComplete) return;
+      const elapsed = (Date.now() - startTime) / 1000;
+      const rawPct = MAX_PCT * (1 - Math.exp(-elapsed / TAU));
+      targetSegs = Math.round(rawPct * SEG_COUNT);
+      frameId = requestAnimationFrame(tick);
+    }
+
+    // 慢速显示 → 一格一格追
+    function startSlowDisplay() {
+      timerId = setInterval(() => {
+        if (isComplete) return;
+        if (displayedSegs < targetSegs) {
+          displayedSegs++;
+          render();
+        }
+      }, SEG_INTERVAL_MS);
+    }
+
+    // 平滑加速到 100%
+    function smoothComplete() {
+      if (isComplete) return;
+      isComplete = true;
+      if (frameId) cancelAnimationFrame(frameId);
+      if (timerId) { clearInterval(timerId); timerId = null; }
+
+      // 快速填满剩余格（每 50ms 一格）
+      const fastInterval = setInterval(() => {
+        if (displayedSegs < SEG_COUNT) {
+          displayedSegs++;
+          render();
+        } else {
+          clearInterval(fastInterval);
+          statusText.textContent = '加载完成 ✅';
+          const wait = Math.max(0, MIN_SPLASH_MS - (Date.now() - startTime));
+          setTimeout(() => { window.location.href = '/app'; }, wait);
+        }
+      }, 50);
+    }
+
+    // 启动
+    tick();
+    startSlowDisplay();
+
+    // ── 轮询后端就绪状态 ───────────────────────────────────
+    async function poll() {
+      try {
+        const resp = await fetch('/health');
+        const data = await resp.json();
+        if (data.status === 'ok') {
+          smoothComplete();
+          return;
+        }
+      } catch (e) {
+        // 忽略连接错误
+      }
+      setTimeout(poll, 2000);
+    }
+    poll();
+  </script>
+</body>
+</html>
