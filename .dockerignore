@@ -1,0 +1,38 @@
+# 构建上下文排除清单（缩小镜像体积、避免泄漏）
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Git
+.git/
+.gitignore
+
+# 模型权重（279MB，通过 volume 挂载，不进镜像）
+*.pt
+backend/models/
+
+# 数据集与训练产物（不打包）
+dataset/
+training_output/
+benchmark/reports/
+test_model.py
+train_ablation.py
+train_distill.py
+yolo11n.pt
+
+# 运行时数据（通过 volume 挂载）
+backend/uploads/
+backend/results/
+backend/pest_data.db*
+
+# 嵌套副本
+post-detect-master/
+
+# 文档与配置
+docs/
+*.md
+.env
+deploy/

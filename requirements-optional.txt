@@ -1,0 +1,6 @@
+# Optional dependencies
+sentence-transformers>=3.0.0
+faiss-cpu>=1.8.0
+rank-bm25>=0.2.0
+openai>=1.30.0
+onnxruntime>=1.18.0

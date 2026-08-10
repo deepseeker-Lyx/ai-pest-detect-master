@@ -1,0 +1,7 @@
+# Default dependency file for Ubuntu/cloud deployment tools.
+# Keep CPU PyTorch pinned here; otherwise pip may download CUDA/nvidia/triton wheels.
+
+-r requirements-server.txt
+torch @ https://download.pytorch.org/whl/cpu/torch-2.3.1%2Bcpu-cp311-cp311-linux_x86_64.whl ; platform_system == "Linux" and python_version == "3.11" and platform_machine == "x86_64"
+torchvision @ https://download.pytorch.org/whl/cpu/torchvision-0.18.1%2Bcpu-cp311-cp311-linux_x86_64.whl ; platform_system == "Linux" and python_version == "3.11" and platform_machine == "x86_64"
+ultralytics==8.4.21
