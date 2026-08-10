@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:8000/qa/status)",
+      "Bash(netstat -ano)",
+      "Bash(awk '{print $5}')",
+      "Bash(xargs -I{} taskkill //PID {} //F)",
+      "Bash(python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000)",
+      "Bash(curl -s -X POST http://localhost:8000/qa/ask -H \"Content-Type: application/json\" -d \"{\\\\\"question\\\\\":\\\\\"这个害虫怎么防治\\\\\",\\\\\"pest_name\\\\\":\\\\\"rice leaf roller\\\\\"}\")",
+      "Bash(curl *)",
+      "Bash(python *)",
+      "Bash(findstr :8000)",
+      "Bash(taskkill *)",
+      "Bash(netsh advfirewall *)",
+      "Bash(findstr /C:\"PID\")",
+      "Bash(findstr LISTENING)",
+      "Bash(start /B python main.py)",
+      "Bash(git rm *)",
+      "Bash(git reset *)",
+      "Bash(git add *)",
+      "Bash(git check-ignore *)",
+      "Bash(grep -E \"\\\\.pt$|\\\\.onnx$|models\")",
+      "Bash(pip list *)",
+      "Bash(pip install *)"
+    ]
+  }
+}

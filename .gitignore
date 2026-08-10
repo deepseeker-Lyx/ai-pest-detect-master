@@ -1,0 +1,32 @@
+﻿# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# 模型权重（体积大，单独管理，部署时通过 scp 上传）
+*.pt
+
+# 数据集（太大不上传）
+dataset/
+
+# 运行时产生的目录
+backend/uploads/
+backend/results/
+knowledge/vector_store/
+
+# 运行时数据库（含 WAL 附属文件）
+backend/pest_data.db*
+
+# 压测运行产物
+benchmark/reports/
+
+# IDE
+.vscode/
+.idea/
+
+# 嵌套副本（项目迁移残留）
+post-detect-master/
+
+# 环境变量
+.env
