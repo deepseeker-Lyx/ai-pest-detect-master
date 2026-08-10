@@ -1,0 +1,549 @@
+<!DOCTYPE html><html><head>
+      <title>design-overview</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:///c:\Users\陆彦旭\.vscode\extensions\shd101wyy.markdown-preview-enhanced-0.8.30\crossnote\dependencies\katex\katex.min.css">
+      
+      
+      
+      
+      
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-details{margin:0;padding:0;border:none}.markdown-preview .md-toc summary.md-toc-link-wrapper{cursor:pointer;list-style-position:outside}.markdown-preview .md-toc summary.md-toc-link-wrapper::marker{font-size:.85em}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='0']{margin-left:12px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='1']{margin-left:28px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='2']{margin-left:44px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='3']{margin-left:60px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='4']{margin-left:76px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='5']{margin-left:80px}.markdown-preview a.tag,.markdown-preview a.tag:active,.markdown-preview a.tag:link,.markdown-preview a.tag:visited,.markdown-preview span.tag:not(.token){display:inline-block;background-color:var(--vscode-badge-background,rgba(127,127,127,.18));color:var(--vscode-badge-foreground,currentColor);border-radius:2em;font-size:.85em;font-weight:500;padding:.05em .55em;line-height:1.5;white-space:nowrap;text-decoration:none;text-shadow:none;box-shadow:none;transition:background-color .12s ease,opacity .12s ease}.markdown-preview a.tag{cursor:pointer}.markdown-preview a.tag:focus,.markdown-preview a.tag:hover{background-color:var(--vscode-badge-background,rgba(127,127,127,.32));color:var(--vscode-badge-foreground,currentColor);opacity:.85;text-decoration:none;outline:0}.markdown-preview .wikilink-embed-content{border-left:3px solid var(--vscode-textBlockQuote-border,rgba(128,128,128,.3));background:var(--vscode-textBlockQuote-background,rgba(128,128,128,.05));margin:.5em 0;padding:.5em .75em;border-radius:0 3px 3px 0}.markdown-preview .wikilink-embed-content.wikilink-embed-error{border-left-color:var(--vscode-errorForeground,#cf222e);color:var(--vscode-errorForeground,#cf222e);font-style:italic;opacity:.8}.markdown-preview .wikilink-embed-content h1:first-child,.markdown-preview .wikilink-embed-content h2:first-child,.markdown-preview .wikilink-embed-content h3:first-child,.markdown-preview .wikilink-embed-content h4:first-child,.markdown-preview .wikilink-embed-content h5:first-child,.markdown-preview .wikilink-embed-content h6:first-child{margin-top:.25em}.markdown-preview .wikilink-embed-content .wikilink-embed-content{margin:.25em 0;padding:.25em .5em}.markdown-preview .block-id{display:none}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:var(--vscode-scrollbarSlider-background,rgba(150,150,150,.66));border:4px solid var(--vscode-scrollbarSlider-background,rgba(150,150,150,.66));background-clip:content-box}.scrollbar-style::-webkit-scrollbar-thumb:hover{background-color:var(--vscode-scrollbarSlider-hoverBackground,rgba(120,120,120,.66))}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:var(--vscode-scrollbarSlider-background,rgba(150,150,150,.66));border:4px solid var(--vscode-scrollbarSlider-background,rgba(150,150,150,.66));background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb:hover{background-color:var(--vscode-scrollbarSlider-hoverBackground,rgba(120,120,120,.66))}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-details{margin:0;padding:0;border:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='0']{padding-left:0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='1']{padding-left:16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='2']{padding-left:32px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='3']{padding-left:48px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='4']{padding-left:64px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='5']{padding-left:80px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <!-- The content below will be included at the end of the <head> element. -->
+<script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script>
+    </head>
+    <body for="html-export">
+      <div class="crossnote markdown-preview  ">
+      
+<h1 id="农作物害虫智能检测系统--增强模块设计文档">农作物害虫智能检测系统 — 增强模块设计文档 </h1>
+<blockquote>
+<p>版本：1.0.0<br>
+最后更新：2026-07-28</p>
+</blockquote>
+<hr>
+<h2 id="目录">目录 </h2>
+<ol>
+<li><a href="#%E4%B8%80%E6%9E%B6%E6%9E%84%E6%80%BB%E8%A7%88">架构总览</a></li>
+<li><a href="#%E4%BA%8C%E6%A8%A1%E5%9D%97%E4%B8%80%E8%AF%AD%E4%B9%89%E5%90%91%E9%87%8F%E7%9F%A5%E8%AF%86%E5%BA%93-semantickbpy">模块一：语义向量知识库</a></li>
+<li><a href="#%E4%B8%89%E6%A8%A1%E5%9D%97%E4%BA%8Cai-%E6%99%BA%E8%83%BD%E9%98%B2%E6%B2%BB-agent-pest_agentpy">模块二：AI 智能防治 Agent</a></li>
+<li><a href="#%E5%9B%9B%E6%A8%A1%E5%9D%97%E4%B8%89%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96%E5%BC%95%E6%93%8E-inference_enginepy">模块三：推理优化引擎</a></li>
+<li><a href="#%E4%BA%94%E9%9B%86%E6%88%90%E6%96%B9%E5%BC%8F">集成方式</a></li>
+<li><a href="#%E5%85%AD%E6%9C%AA%E6%9D%A5%E5%B1%95%E6%9C%9B">未来展望</a></li>
+</ol>
+<hr>
+<h2 id="一-架构总览">一、架构总览 </h2>
+<h3 id="11-增强后的系统架构">1.1 增强后的系统架构 </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>┌──────────────────────────────────────────────────────────────┐
+│                       客户端（浏览器/手机）                    │
+│   HTML + CSS + JS（纯静态）                                  │
+│   图片上传 / 摄像头拍照 / 流式问答                            │
+└──────────────────────┬───────────────────────────────────────┘
+                       │ HTTP (REST API + SSE)
+┌──────────────────────▼───────────────────────────────────────┐
+│                    后端服务（FastAPI）                         │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │  原有接口（保持兼容）                                  │    │
+│  │  POST /detect/image    ← 图片检测（旧）               │    │
+│  │  POST /detect/base64   ← Base64 检测（旧）           │    │
+│  │  POST /qa/ask          ← 知识库问答（旧）             │    │
+│  │  POST /qa/ask-stream   ← 流式问答（旧）              │    │
+│  └──────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │  新增增强接口（v2）                                   │    │
+│  │  POST /detect/analyze  ← 检测+Agent分析（新）        │    │
+│  │  GET  /enhanced/status ← 增强模块状态（新）          │    │
+│  │  GET  /enhanced/perf   ← 性能报告（新）              │    │
+│  │  GET  /enhanced/cache/clear ← 清空缓存（新）         │    │
+│  └──────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │  增强模块                                              │    │
+│  │                                                        │    │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────┐   │    │
+│  │  │ 语义知识库    │  │ AI Agent     │  │ 推理引擎  │   │    │
+│  │  │ semantic_kb  │→│ pest_agent  │→│inference │   │    │
+│  │  │ .py          │  │ .py          │  │_engine.py│   │    │
+│  │  └──────────────┘  └──────────────┘  └──────────┘   │    │
+│  └──────────────────────────────────────────────────────┘    │
+└──────────────────────────────────────────────────────────────┘
+</code></pre><h3 id="12-新旧对比">1.2 新旧对比 </h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>原有系统</th>
+<th>增强后系统</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>知识库检索</td>
+<td>TF-IDF 关键词匹配</td>
+<td>语义向量检索 + BM25 混合 + Rerank</td>
+</tr>
+<tr>
+<td>问答方式</td>
+<td>一次性回答</td>
+<td>ReAct 多步推理 + Agent 工具调用</td>
+</tr>
+<tr>
+<td>推理性能</td>
+<td>每次 300-400ms</td>
+<td>缓存命中时 &lt; 1ms，CLAHE 增强</td>
+</tr>
+<tr>
+<td>输出格式</td>
+<td>纯文本</td>
+<td>结构化 JSON 报告</td>
+</tr>
+<tr>
+<td>硬件适配</td>
+<td>固定 CUDA</td>
+<td>自适应 CUDA/MPS/ONNX/CPU</td>
+</tr>
+<tr>
+<td>可观测性</td>
+<td>无</td>
+<td>每步耗时分析 + 性能报告</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="二-模块一语义向量知识库-semantic_kbpy">二、模块一：语义向量知识库 (<code>semantic_kb.py</code>) </h2>
+<h3 id="21-设计背景">2.1 设计背景 </h3>
+<p>原有知识库使用 TF-IDF 关键词匹配检索，存在以下不足：</p>
+<ul>
+<li><strong>语义鸿沟</strong>：搜索"叶子卷了"找不到"稻纵卷叶螟"</li>
+<li><strong>同义词盲区</strong>："防治"和"治理"被视为不同词汇</li>
+<li><strong>排序粗糙</strong>：仅按词频打分，缺乏语义相关性排序</li>
+</ul>
+<h3 id="22-技术方案">2.2 技术方案 </h3>
+<h4 id="221-三层检索架构">2.2.1 三层检索架构 </h4>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>用户问题
+    │
+    ├── ① 语义检索（FAISS + sentence-transformers）
+    │     将问题和知识块都转为向量（768维）
+    │     用余弦相似度检索 Top-N
+    │     理解语义："叶子卷了" ≈ "稻纵卷叶螟"
+    │
+    ├── ② BM25 关键词检索（rank-bm25）
+    │     精确匹配关键词
+    │     保证"二化螟 防治"这种精准查询不丢失
+    │
+    └── ③ RRF 融合 + Cross-Encoder 重排序
+           Reciprocal Rank Fusion 合并两个结果集
+           Cross-Encoder 对 Top-8 重新打分排序
+           保证最相关的结果排在最前面
+</code></pre><h4 id="222-核心类semanticknowledgebase">2.2.2 核心类：<code>SemanticKnowledgeBase</code> </h4>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>SemanticKnowledgeBase
+├── __init__(mode="hybrid")
+│   ├── mode="semantic" → 仅语义检索
+│   ├── mode="hybrid"   → 语义 + 关键词混合（推荐）
+│   └── mode="keyword"  → 降级到关键词检索
+│
+├── search(question, pest_name=None, limit=4)
+│   └── 统一检索入口，根据 mode 自动路由
+│
+├── pest_info(pest_name)
+│   └── 获取害虫详细信息
+│
+└── incremental_update()
+    └── 增量更新索引（新增 JSON 后调用）
+</code></pre><h4 id="223-使用的关键技术">2.2.3 使用的关键技术 </h4>
+<table>
+<thead>
+<tr>
+<th>技术</th>
+<th>用途</th>
+<th>替代方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sentence-transformers</code></td>
+<td>语义嵌入模型</td>
+<td>可用 BGE / text2vec 等替换</td>
+</tr>
+<tr>
+<td><code>FAISS (IndexFlatIP)</code></td>
+<td>向量相似度检索</td>
+<td>可用 ChromaDB / Milvus 替换</td>
+</tr>
+<tr>
+<td><code>rank-bm25</code></td>
+<td>关键词检索</td>
+<td>可用 Elasticsearch 替换</td>
+</tr>
+<tr>
+<td><code>Cross-Encoder</code></td>
+<td>结果重排序</td>
+<td>可用 Cohere Rerank 替换</td>
+</tr>
+</tbody>
+</table>
+<h4 id="224-索引构建流程">2.2.4 索引构建流程 </h4>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>JSON 知识文件 (knowledge/pests/*.json)
+    │
+    ▼
+分块（按 Section：特征/症状/发生/防治/问答）
+    │
+    ▼
+向量化（sentence-transformers → 768维向量）
+    │
+    ▼
+存入 FAISS 索引 + 持久化到磁盘
+    │
+    ▼
+运行时加载到内存（启动约 2 秒）
+</code></pre><h3 id="23-创新点">2.3 创新点 </h3>
+<ol>
+<li><strong>混合检索（Hybrid Search）</strong>：语义 + 关键词双重保障，既懂意图又保精度</li>
+<li><strong>重排序 Pipeline（Rerank）</strong>：Cross-Encoder 二次排序，业界 RAG 2.0 标准做法</li>
+<li><strong>增量更新</strong>：新增害虫资料时无需重建全量索引</li>
+<li><strong>优雅降级</strong>：未安装依赖时自动降级为 TF-IDF，不影响系统运行</li>
+</ol>
+<hr>
+<h2 id="三-模块二ai-智能防治-agent-pest_agentpy">三、模块二：AI 智能防治 Agent (<code>pest_agent.py</code>) </h2>
+<h3 id="31-设计背景">3.1 设计背景 </h3>
+<p>原有问答系统是一次性"检索 → 拼接 → 返回"，流程简单但存在以下问题：</p>
+<ul>
+<li><strong>缺乏推理能力</strong>：不能根据置信度、害虫种类综合判断</li>
+<li><strong>输出单一</strong>：只有文本摘要，没有结构化诊断</li>
+<li><strong>无状态</strong>：每次问答都是独立请求，没有上下文记忆</li>
+<li><strong>无工具调用</strong>：只能查知识库，不能进行多步分析</li>
+</ul>
+<h3 id="32-技术方案">3.2 技术方案 </h3>
+<h4 id="321-react-推理框架">3.2.1 ReAct 推理框架 </h4>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>用户输入："稻纵卷叶螟怎么防治？"
+    │
+    ▼
+┌─────────────────────────────────┐
+│  Thought（思考）                 │
+│  "用户想知道防治方法，我需要：    │
+│   1. 查知识库获取资料            │
+│   2. 分析置信度评估严重程度       │
+│   3. 生成结构化报告"              │
+└─────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────┐
+│  Action（行动）                  │
+│  ├─ tool_search_knowledge()     │
+│  ├─ tool_analyze_risk()         │
+│  └─ tool_format_report()        │
+└─────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────┐
+│  Observation（观察）             │
+│  "知识库查到 3 条建议            │
+│   置信度 85%，属于高风险"        │
+└─────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────┐
+│  Final Answer（最终回答）        │
+│  DiagnosisReport {               │
+│    assessment: "综合评估..."    │
+│    analysis: "详细分析..."      │
+│    recommendation: [...]        │
+│    prevention: [...]            │
+│    risk_level: "高"             │
+│  }                              │
+└─────────────────────────────────┘
+</code></pre><h4 id="322-核心数据模型">3.2.2 核心数据模型 </h4>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>PestDetection（YOLO 检测结果）
+├── name: str          # 英文名
+├── zh_name: str       # 中文名
+├── confidence: float  # 置信度
+├── bbox: list[int]    # 检测框 [x1,y1,x2,y2]
+├── symptoms: list[str]
+└── prevention: list[str]
+
+DiagnosisReport（Agent 诊断报告）
+├── pest_name: str
+├── zh_name: str
+├── confidence: float
+├── assessment: str         # 综合评估（1-2句话）
+├── analysis: str           # 详细分析（3-5句话）
+├── recommendation: list[str]  # 防治建议
+├── prevention: list[str]      # 预防措施
+├── risk_level: str         # 风险等级（低/中/高）
+└── sources: list[str]      # 知识来源
+</code></pre><h4 id="323-agent-工具集">3.2.3 Agent 工具集 </h4>
+<table>
+<thead>
+<tr>
+<th>工具名称</th>
+<th>功能</th>
+<th>输入</th>
+<th>输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tool_search_knowledge</code></td>
+<td>检索知识库</td>
+<td>question, pest_name</td>
+<td>相关资料列表</td>
+</tr>
+<tr>
+<td><code>tool_analyze_risk</code></td>
+<td>风险评估</td>
+<td>confidence, pest_name</td>
+<td>风险等级文字</td>
+</tr>
+<tr>
+<td><code>tool_format_report</code></td>
+<td>生成报告</td>
+<td>detection, contexts</td>
+<td>DiagnosisReport</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-双模式运行">3.3 双模式运行 </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>Agent
+├── LLM 模式（需要配置 API Key）
+│   ├── 调用 GPT-4 / DeepSeek / 通义千问
+│   ├── 生成自然语言结构化报告
+│   └── 输出 JSON 格式
+│
+└── 模板模式（无需外部依赖）
+    ├── 内置规则引擎
+    ├── 从知识库提取关键信息
+    └── 拼接结构化文本
+</code></pre><h3 id="34-创新点">3.4 创新点 </h3>
+<ol>
+<li><strong>ReAct 推理框架</strong>：模拟人类专家的思考过程，而非简单检索</li>
+<li><strong>工具调用（Tool-use）</strong>：Agent 可自主调用知识库、风险分析等工具</li>
+<li><strong>记忆管理</strong>：区分短期（对话历史）和长期（害虫知识）记忆</li>
+<li><strong>结构化输出</strong>：输出四段式报告（诊断→分析→建议→预防）</li>
+<li><strong>双模式运行</strong>：有 LLM 用 LLM，无 LLM 用模板，永不报错</li>
+</ol>
+<hr>
+<h2 id="四-模块三推理优化引擎-inference_enginepy">四、模块三：推理优化引擎 (<code>inference_engine.py</code>) </h2>
+<h3 id="41-设计背景">4.1 设计背景 </h3>
+<p>原有推理流程存在以下不足：</p>
+<ul>
+<li><strong>无缓存</strong>：相同图片重复推理，每次都要 300-400ms</li>
+<li><strong>无预处理</strong>：光照不足或雾天时检测效果差</li>
+<li><strong>同步阻塞</strong>：推理过程卡住事件循环，影响并发</li>
+<li><strong>无可观测性</strong>：不知道每步耗时，无法定位瓶颈</li>
+</ul>
+<h3 id="42-技术方案">4.2 技术方案 </h3>
+<h4 id="421-三层加速架构">4.2.1 三层加速架构 </h4>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>                    ┌──────────────────────┐
+用户上传图片 ──→    │  ① 感知哈希缓存       │
+                    │  dHash + LRU 淘汰     │
+                    │  命中 → 直接返回结果   │
+                    │  未命中 → 继续         │
+                    └──────────────────────┘
+                            │ 未命中
+                    ┌──────────────────────┐
+                    │  ② 图像预处理         │
+                    │  CLAHE 自适应直方图    │
+                    │  + 自动去雾           │
+                    └──────────────────────┘
+                            │
+                    ┌──────────────────────┐
+                    │  ③ 模型推理           │
+                    │  自动选后端           │
+                    │  CUDA/MPS/ONNX/CPU    │
+                    └──────────────────────┘
+                            │
+                        返回结果
+</code></pre><h4 id="422-感知哈希缓存perceptual-hashing">4.2.2 感知哈希缓存（Perceptual Hashing） </h4>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>dHash（差异哈希）原理：
+
+原始图片 (640x480)
+    │ 转灰度 + 缩放到 9x8
+    ▼
+9x8 灰度图
+    │ 每行相邻像素比较
+    │ 右边 &gt; 左边 = 1，否则 = 0
+    ▼
+72位二进制哈希: "101010011001..."
+    │ 汉明距离 &lt; 阈值（8位）→ 认定为相似图片
+    ▼
+缓存命中 / 未命中
+
+应用场景：
+- 同一片稻田反复拍照 → 秒回结果
+- 移动端摄像头对同一区域多次拍摄
+- 批量处理相似图片
+</code></pre><h4 id="423-自适应后端选择">4.2.3 自适应后端选择 </h4>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code>后端检测逻辑：
+
+<span class="token keyword keyword-if">if</span> CUDA 可用 → <span class="token string">"NVIDIA GPU 推理（最快）"</span>
+<span class="token keyword keyword-elif">elif</span> MPS 可用 → <span class="token string">"Apple Silicon 推理"</span>
+<span class="token keyword keyword-elif">elif</span> ONNX Runtime 可用 → <span class="token string">"ONNX 优化推理"</span>
+<span class="token keyword keyword-else">else</span> → <span class="token string">"CPU 推理（兜底）"</span>
+</code></pre><h4 id="424-去雾和光照增强">4.2.4 去雾和光照增强 </h4>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>CLAHE 自适应直方图均衡化：
+
+输入图片（暗光/逆光）
+    │
+    ▼
+转 LAB 色彩空间
+    │ 对 L 通道做 CLAHE
+    ▼
+增强后的 L 通道
+    │ 合并回 LAB 并转 BGR
+    ▼
+对比度检查
+    │ if std &lt; 40 → 触发去雾
+    ▼
+输出增强图片 → 送入 YOLO 检测
+</code></pre><h3 id="43-核心类">4.3 核心类 </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>AdaptiveInferenceEngine
+├── preprocess(image) → 图像增强
+├── infer(image) → (result, timeline)
+├── get_perf_report() → 性能报告
+└── switch_model(new_model) → 热切换模型
+
+PerceptualCache
+├── get(image) → (hit, result)
+├── put(image, result)
+├── hit_rate → 缓存命中率
+└── clear()
+
+BatchProcessor
+└── submit(image) → 提交到批处理队列
+</code></pre><h3 id="44-创新点">4.4 创新点 </h3>
+<ol>
+<li><strong>感知哈希缓存（dHash）</strong>：非精确匹配缓存，光照变化也能命中</li>
+<li><strong>自适应硬件后端</strong>：自动检测最佳推理设备，零配置</li>
+<li><strong>CLAHE 增强 + 自动去雾</strong>：被动适应恶劣环境，不改模型</li>
+<li><strong>每步耗时分析</strong>：精确到毫秒的时间线，定位性能瓶颈</li>
+<li><strong>LRU 淘汰策略</strong>：缓存满时自动淘汰最久未使用的条目</li>
+</ol>
+<hr>
+<h2 id="五-集成方式">五、集成方式 </h2>
+<h3 id="51-依赖安装">5.1 依赖安装 </h3>
+<pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code><span class="token comment"># 增强模块依赖（可选，不装则自动降级）</span>
+pip <span class="token function">install</span> <span class="token parameter variable">-r</span> requirements-optional.txt
+</code></pre><h3 id="52-代码集成">5.2 代码集成 </h3>
+<p>在 <code>main.py</code> 中：</p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token comment"># 自动检测并加载增强模块</span>
+<span class="token keyword keyword-try">try</span><span class="token punctuation">:</span>
+    <span class="token keyword keyword-from">from</span> backend<span class="token punctuation">.</span>semantic_kb <span class="token keyword keyword-import">import</span> create_knowledge_base <span class="token keyword keyword-as">as</span> create_semantic_kb
+    <span class="token keyword keyword-from">from</span> backend<span class="token punctuation">.</span>pest_agent <span class="token keyword keyword-import">import</span> create_agent<span class="token punctuation">,</span> detection_to_report<span class="token punctuation">,</span> PestDetection
+    <span class="token keyword keyword-from">from</span> backend<span class="token punctuation">.</span>inference_engine <span class="token keyword keyword-import">import</span> create_engine
+    _HAS_NEW_MODULES <span class="token operator">=</span> <span class="token boolean">True</span>
+<span class="token keyword keyword-except">except</span> ImportError<span class="token punctuation">:</span>
+    _HAS_NEW_MODULES <span class="token operator">=</span> <span class="token boolean">False</span>
+</code></pre><h3 id="53-新增-api-路由">5.3 新增 API 路由 </h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/enhanced/status</code></td>
+<td>查看增强模块状态</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/detect/analyze</code></td>
+<td>检测 + Agent 分析一步完成</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/enhanced/perf</code></td>
+<td>推理引擎性能报告</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/enhanced/cache/clear</code></td>
+<td>清空推理缓存</td>
+</tr>
+</tbody>
+</table>
+<h3 id="54-优雅降级机制">5.4 优雅降级机制 </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>依赖缺失 → 打印提示 → 使用原始版本 → 完全不影响原有功能
+
+新模块初始化失败 → 捕获异常 → semantic_kb = None → 跳过增强路由
+</code></pre><hr>
+<h2 id="六-未来展望">六、未来展望 </h2>
+<h3 id="61-短期可优化项">6.1 短期可优化项 </h3>
+<table>
+<thead>
+<tr>
+<th>方向</th>
+<th>具体方案</th>
+<th>难度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>向量数据库</td>
+<td>替换 FAISS 为 Chromadb（支持过滤、混合检索）</td>
+<td>⭐⭐</td>
+</tr>
+<tr>
+<td>图片重排序</td>
+<td>用 CLIP 做图片级语义检索，用户可搜"长这样的害虫"</td>
+<td>⭐⭐⭐</td>
+</tr>
+<tr>
+<td>多模态 RAG</td>
+<td>知识库中存害虫图片，回答时附带图片参考</td>
+<td>⭐⭐⭐</td>
+</tr>
+<tr>
+<td>WebRTC 实时检测</td>
+<td>视频流实时检测，替代单张上传</td>
+<td>⭐⭐⭐⭐</td>
+</tr>
+</tbody>
+</table>
+<h3 id="62-长期演进方向">6.2 长期演进方向 </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>当前                         未来
+─────────────────────────────────────────────────
+TF-IDF 检索          →    多模态 RAG（文本+图片）
+单轮问答             →    多轮对话 Agent
+单张图片检测         →    视频流实时检测
+单一 YOLO 模型       →    模型集成（YOLO + DETR）
+CPU 推理             →    TensorRT / CoreML 加速
+手动部署             →    Docker + CI/CD 自动部署
+</code></pre><hr>
+<blockquote>
+<p>本文档对应的源代码位于 <code>backend/</code> 目录：</p>
+<ul>
+<li><code>backend/semantic_kb.py</code> — 语义向量知识库</li>
+<li><code>backend/pest_agent.py</code> — AI 智能防治 Agent</li>
+<li><code>backend/inference_engine.py</code> — 推理优化引擎</li>
+<li><code>backend/main.py</code> — 集成入口（含新增 API 路由）</li>
+</ul>
+</blockquote>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+  
+    </body></html>
