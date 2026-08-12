@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import shutil
 import sys
 import time
 import uuid
@@ -20,9 +21,10 @@ if str(Path(__file__).resolve().parent.parent) not in sys.path:
 
 import cv2
 import numpy as np
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
+from backend.auth import require_login
 from backend.state import state
 from backend.config import RESULT_DIR, UPLOAD_DIR
 from backend.constants import CLASS_CONF_THRESHOLDS, MAX_UPLOAD_BYTES, PEST_NAMES as NAMES
@@ -162,8 +164,10 @@ def _merge_uncertain_detections(detections: list[Detection]) -> list[Detection]:
     return merged
 
 
-def _run_detect(img_input, result_name: str) -> DetectResponse:
-    """执行一次完整检测：推理 → 阈值过滤 → 合并 → 开放集识别 → 存历史"""
+def _run_detect(img_input, result_name: str, username: str = "",
+                original_input=None, is_internal: bool = False) -> DetectResponse:
+    """执行一次完整检测：推理 → 阈值过滤 → 合并 → 开放集识别 → 存历史
+    is_internal=True 表示内部/测试操作（专家/管理员），记录不进入用户质量统计"""
     t0 = time.time()
 
     # 推理引擎仅用于缓存加速（输入需为 numpy 数组）
@@ -174,6 +178,23 @@ def _run_detect(img_input, result_name: str) -> DetectResponse:
     else:
         results = state.model(img_input, conf=0.25, augment=True)[0]
         elapsed = (time.time() - t0) * 1000
+
+    # ⭐ 保存原图副本（供专家审核 / 留档）
+    original_url = ""
+    try:
+        src = original_input if original_input is not None else img_input
+        if isinstance(src, np.ndarray):
+            orig_path = RESULT_DIR / f"orig_{result_name}"
+            cv2.imwrite(str(orig_path), src)
+            original_url = f"/results/orig_{result_name}"
+        else:
+            p = Path(src)
+            if p.exists():
+                orig_path = RESULT_DIR / f"orig_{result_name}"
+                shutil.copy2(str(p), str(orig_path))
+                original_url = f"/results/orig_{result_name}"
+    except Exception:
+        pass
 
     result_img = results.plot()
     result_path = RESULT_DIR / result_name
@@ -239,6 +260,9 @@ def _run_detect(img_input, result_name: str) -> DetectResponse:
             elapsed_ms=round(elapsed, 1),
             is_unknown=is_unknown,
             unknown_type=unknown_type,
+            username=username,
+            original_image=original_url,
+            is_internal=is_internal,
         )
     except Exception:
         pass
@@ -257,8 +281,8 @@ def _run_detect(img_input, result_name: str) -> DetectResponse:
 
 # ── 路由 ─────────────────────────────────────────────────────────
 @router.post("/detect/image", response_model=DetectResponse)
-async def detect_image(file: UploadFile = File(...)):
-    """上传图片进行害虫检测"""
+async def detect_image(file: UploadFile = File(...), user: dict = Depends(require_login)):
+    """上传图片进行害虫检测（需登录）"""
     if not state.models_ready:
         return JSONResponse(status_code=503, content={"detail": "模型加载中，请稍后重试"})
     _check_ext(file.filename)
@@ -272,14 +296,14 @@ async def detect_image(file: UploadFile = File(...)):
 
     try:
         # YOLO 推理为 CPU/GPU 密集，放入线程池避免阻塞事件循环
-        return await asyncio.to_thread(_run_detect, str(upload_path), f"result_{save_name}")
+        return await asyncio.to_thread(_run_detect, str(upload_path), f"result_{save_name}", user["username"], str(upload_path), user.get("role", "user") != "user")
     finally:
         upload_path.unlink(missing_ok=True)
 
 
 @router.post("/detect/base64", response_model=DetectResponse)
-async def detect_base64(payload: dict):
-    """接收 base64 编码的图片（移动端摄像头直接上传）"""
+async def detect_base64(payload: dict, user: dict = Depends(require_login)):
+    """接收 base64 编码的图片（移动端摄像头直接上传，需登录）"""
     data_url: str = payload.get("image", "")
     if not data_url:
         raise HTTPException(status_code=400, detail="缺少 image 字段")
@@ -304,13 +328,13 @@ async def detect_base64(payload: dict):
         raise HTTPException(status_code=400, detail=f"图片解析错误: {e}")
 
     result_name = f"result_{uuid.uuid4().hex[:12]}.jpg"
-    return await asyncio.to_thread(_run_detect, img, result_name)
+    return await asyncio.to_thread(_run_detect, img, result_name, user["username"], img, user.get("role", "user") != "user")
 
 
 @router.post("/detect/analyze")
-async def detect_and_analyze(file: UploadFile = File(...)):
+async def detect_and_analyze(file: UploadFile = File(...), user: dict = Depends(require_login)):
     """
-    🔬 增强检测 —— 检测 + AI Agent 分析一步完成。
+    🔬 增强检测 —— 检测 + AI Agent 分析一步完成（需登录）。
 
     返回结构化报告：诊断 → 分析 → 防治建议 → 预防措施
     """
@@ -325,7 +349,7 @@ async def detect_and_analyze(file: UploadFile = File(...)):
 
     try:
         # 1. 检测（CPU 密集，放入线程池避免阻塞事件循环）
-        detect_result = await asyncio.to_thread(_run_detect, str(upload_path), f"result_{save_name}")
+        detect_result = await asyncio.to_thread(_run_detect, str(upload_path), f"result_{save_name}", user["username"], str(upload_path), user.get("role", "user") != "user")
 
         # 2. 如果有 Agent，生成结构化分析报告
         if state.agent is not None and detect_result.detections:

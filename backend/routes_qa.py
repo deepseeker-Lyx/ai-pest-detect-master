@@ -18,9 +18,10 @@ from pathlib import Path
 if str(Path(__file__).resolve().parent.parent) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
+from backend.auth import require_login
 from backend.knowledge_base import answer_with_llm, answer_with_llm_stream, knowledge_base
 from backend.schemas import QARequest, QAResponse, QASource
 from backend.storage import save_qa
@@ -128,7 +129,7 @@ async def get_common_questions():
 
 
 @router.post("/qa/ask", response_model=QAResponse)
-async def ask_knowledge_base(payload: QARequest):
+async def ask_knowledge_base(payload: QARequest, user: dict = Depends(require_login)):
     question = payload.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail="问题不能为空")
@@ -174,7 +175,7 @@ async def ask_knowledge_base(payload: QARequest):
 
     # 记录问答历史（SQLite）
     try:
-        save_qa(question, result["answer"], _pest_label(pest_names), result.get("used_llm", False))
+        save_qa(question, result["answer"], _pest_label(pest_names), result.get("used_llm", False), username=user["username"], is_internal=(user.get("role", "user") != "user"))
     except Exception:
         pass
 
@@ -187,8 +188,8 @@ async def ask_knowledge_base(payload: QARequest):
 
 
 @router.post("/qa/ask-stream")
-async def ask_knowledge_base_stream(payload: QARequest):
-    """流式问答接口，支持打字机效果"""
+async def ask_knowledge_base_stream(payload: QARequest, user: dict = Depends(require_login)):
+    """流式问答接口（需登录），支持打字机效果"""
     question = payload.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail="问题不能为空")
@@ -215,7 +216,7 @@ async def ask_knowledge_base_stream(payload: QARequest):
 
             # 记录问答历史（SQLite）
             try:
-                save_qa(question, "".join(_collected)[:2000], _pest_label(pest_names), True)
+                save_qa(question, "".join(_collected)[:2000], _pest_label(pest_names), True, username=user["username"], is_internal=(user.get("role", "user") != "user"))
             except Exception:
                 pass
 

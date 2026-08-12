@@ -13,35 +13,36 @@ from pathlib import Path
 if str(Path(__file__).resolve().parent.parent) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from backend.auth import require_login
 from backend.storage import get_detections, get_qa, get_stats
 
 router = APIRouter()
 
 
 @router.get("/history/detections")
-async def history_detections(limit: int = 20):
-    """检测历史记录"""
+async def history_detections(limit: int = 20, user: dict = Depends(require_login)):
+    """检测历史记录（按当前用户隔离，需登录）"""
     try:
-        return {"success": True, "records": get_detections(limit)}
+        return {"success": True, "records": get_detections(limit, username=user["username"])}
     except Exception as e:
         return {"success": False, "message": str(e), "records": []}
 
 
 @router.get("/history/qa")
-async def history_qa(limit: int = 20):
-    """问答历史记录"""
+async def history_qa(limit: int = 20, user: dict = Depends(require_login)):
+    """问答历史记录（按当前用户隔离，需登录）"""
     try:
-        return {"success": True, "records": get_qa(limit)}
+        return {"success": True, "records": get_qa(limit, username=user["username"])}
     except Exception as e:
         return {"success": False, "message": str(e), "records": []}
 
 
 @router.get("/history/stats")
-async def history_stats():
-    """使用统计：总数、害虫频率、每日趋势"""
+async def history_stats(user: dict = Depends(require_login)):
+    """使用统计（按当前用户隔离，需登录）"""
     try:
-        return {"success": True, **get_stats()}
+        return {"success": True, **get_stats(username=user["username"])}
     except Exception as e:
         return {"success": False, "message": str(e)}

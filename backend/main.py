@@ -31,10 +31,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from ultralytics import YOLO
 
-from backend import routes_detect, routes_enhanced, routes_history, routes_qa, routes_weather
+from backend import routes_admin, routes_auth, routes_detect, routes_enhanced, routes_expert, routes_history, routes_qa, routes_weather
 from backend.state import state
 from backend.config import FRONTEND_DIR, MODEL_PATH, RESULT_DIR, UPLOAD_DIR
-from backend.constants import CLEANUP_INTERVAL_HOURS, RESULT_RETENTION_HOURS, UPLOAD_RETENTION_HOURS
+from backend.constants import CLEANUP_INTERVAL_HOURS, HISTORY_RETENTION_DAYS, RESULT_RETENTION_HOURS, UPLOAD_RETENTION_HOURS
+from backend.storage import cleanup_old_records
 from backend.storage import init_db as storage_init
 
 # ── 自动加载项目根目录的 .env 文件 ──────────────────────────────
@@ -178,12 +179,13 @@ def _cleanup_old_files(directory: Path, max_hours: float) -> int:
 
 
 def _start_cleanup_scheduler() -> None:
-    """后台线程周期性清理过期文件"""
+    """后台线程周期性清理过期文件 + 超期历史记录（保留策略）"""
     def _loop():
         while True:
             try:
                 _cleanup_old_files(RESULT_DIR, RESULT_RETENTION_HOURS)
                 _cleanup_old_files(UPLOAD_DIR, UPLOAD_RETENTION_HOURS)
+                cleanup_old_records(HISTORY_RETENTION_DAYS)
             except Exception:
                 pass
             time.sleep(CLEANUP_INTERVAL_HOURS * 3600)
@@ -193,6 +195,7 @@ def _start_cleanup_scheduler() -> None:
 
 _cleanup_old_files(RESULT_DIR, RESULT_RETENTION_HOURS)
 _cleanup_old_files(UPLOAD_DIR, UPLOAD_RETENTION_HOURS)
+cleanup_old_records(HISTORY_RETENTION_DAYS)
 _start_cleanup_scheduler()
 
 
@@ -202,19 +205,52 @@ app.include_router(routes_qa.router)
 app.include_router(routes_history.router)
 app.include_router(routes_weather.router)
 app.include_router(routes_enhanced.router)
+app.include_router(routes_auth.router)
+app.include_router(routes_admin.router)
+app.include_router(routes_expert.router)
 
 
 # ── 根路由与健康检查 ─────────────────────────────────────────────
+# HTML 页面一律禁用缓存，避免用户（尤其手机端）看到旧版本界面
+_NO_CACHE_HEADERS = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+
+
+def _page(name: str) -> FileResponse:
+    return FileResponse(str(FRONTEND_DIR / "templates" / name), headers=_NO_CACHE_HEADERS)
+
+
 @app.get("/", include_in_schema=False)
 async def index():
     """品牌加载页（入场动画）"""
-    return FileResponse(str(FRONTEND_DIR / "templates" / "loading.html"))
+    return _page("loading.html")
 
 
 @app.get("/app")
 async def app_index():
     """主应用页面（由加载页跳转过来）"""
-    return FileResponse(str(FRONTEND_DIR / "templates" / "index.html"))
+    return _page("index.html")
+
+
+@app.get("/login", include_in_schema=False)
+async def login_page():
+    """登录页面"""
+    return _page("login.html")
+
+
+@app.get("/admin", include_in_schema=False)
+async def admin_page():
+    """管理员页面"""
+    return _page("admin.html")
+
+
+@app.get("/expert", include_in_schema=False)
+async def expert_page():
+    """专家工作台页面"""
+    return _page("expert.html")
 
 
 @app.get("/health")

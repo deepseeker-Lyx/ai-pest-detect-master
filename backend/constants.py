@@ -51,3 +51,4 @@ MAX_UPLOAD_BYTES: int = 10 * 1024 * 1024      # 单张图片上限 10MB
 RESULT_RETENTION_HOURS: float = 72.0          # 检测结果图保留 3 天
 UPLOAD_RETENTION_HOURS: float = 24.0          # 上传临时文件保留 1 天
 CLEANUP_INTERVAL_HOURS: float = 6.0           # 清理任务执行间隔
+HISTORY_RETENTION_DAYS: int = 365             # 检测/问答历史记录保留天数（控制数据增长，可调）
