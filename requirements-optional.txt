@@ -4,3 +4,11 @@ faiss-cpu>=1.8.0
 rank-bm25>=0.2.0
 openai>=1.30.0
 onnxruntime>=1.18.0
+
+# 阿里云短信 SDK（仅当 .env 中 SMS_PROVIDER=aliyun 时需要）
+# alibabacloud-dysmsapi20170525
+# alibabacloud-tea-openapi
+# alibabacloud-tea-util
+
+# 腾讯云短信 SDK（仅当 .env 中 SMS_PROVIDER=tencent 时需要）
+# tencentcloud-sdk-python
