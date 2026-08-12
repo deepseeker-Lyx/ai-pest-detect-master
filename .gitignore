@@ -17,6 +17,7 @@ knowledge/vector_store/
 
 # 运行时数据库（含 WAL 附属文件）
 backend/pest_data.db*
+/pest_data.db
 
 # 压测运行产物
 benchmark/reports/
