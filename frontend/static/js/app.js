@@ -32,6 +32,63 @@ let qaBusy = false;
 function initApp() {
   showWelcomeMessage();
   bindEvents();
+  setupAuthUI();
+}
+
+// ── 登录状态与角色 UI（用户 / 管理员 / 专家） ────────────────────
+function setupAuthUI() {
+  const role = sessionStorage.getItem('pest_role');
+  const isAdmin = role === 'admin';
+  const isExpert = role === 'expert';  // 专家工作台：仅专家可见（管理员从管理后台监督专家成果）
+
+  // 专家工作台入口（专家 / 管理员可见）
+  const expertBtn = document.getElementById('expertBtn');
+  if (expertBtn) {
+    expertBtn.style.display = isExpert ? '' : 'none';
+    if (isExpert) {
+      expertBtn.addEventListener('click', () => { location.href = '/expert?v=6'; });
+    }
+  }
+
+  // 管理员入口按钮（仅管理员可见）
+  const adminBtn = document.getElementById('adminBtn');
+  if (adminBtn) {
+    adminBtn.style.display = isAdmin ? '' : 'none';
+    if (isAdmin) {
+      adminBtn.addEventListener('click', () => { location.href = '/admin?v=6'; });
+    }
+  }
+
+  // 顶部导航栏：登录用户显示「退出登录」图标（能进入即已登录）
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.style.display = '';
+    logoutBtn.title = '退出登录';
+    logoutBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i>';
+    logoutBtn.onclick = () => doLogout();
+  }
+
+  // 内部测试模式标识：专家/管理员在主应用的操作视为测试数据（不进入用户统计）
+  const testModeTag = document.getElementById('testModeTag');
+  if (testModeTag) {
+    testModeTag.style.display = (isAdmin || isExpert) ? '' : 'none';
+  }
+}
+
+function doLogout() {
+  const token = sessionStorage.getItem('pest_token');
+  if (token) {
+    fetch('/auth/logout', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+    }).catch(() => {});
+  }
+  sessionStorage.removeItem('pest_token');
+  sessionStorage.removeItem('pest_role');
+  sessionStorage.removeItem('pest_username');
+  sessionStorage.removeItem('pest_display');
+  sessionStorage.removeItem('pest_guest');
+  location.href = '/login';
 }
 
 function showWelcomeMessage() {
@@ -340,7 +397,7 @@ async function askQuestionStream(question) {
 
     const response = await fetch(`${API_BASE}/qa/ask-stream`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (sessionStorage.getItem('pest_token') || '') },
       body: JSON.stringify({
         question,
         pest_names: pestNames,
@@ -472,6 +529,7 @@ async function handleFile(file) {
   try {
     const response = await fetch(`${API_BASE}/detect/image`, {
       method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + (sessionStorage.getItem('pest_token') || '') },
       body: formData,
     });
 
@@ -920,21 +978,27 @@ function openHistory() {
 function loadHistoryTab(tab) {
   const body = document.getElementById('historyBody');
   if (!body) return;
+  // 携带登录 token，让后端按当前用户隔离记录（游客无 token）
+  const headers = {};
+  const token = sessionStorage.getItem('pest_token');
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const opts = { headers };
+
   if (tab === 'stats') {
     body.innerHTML = '<div class="history-empty">加载统计中…</div>';
-    fetch(`${API_BASE}/history/stats`)
+    fetch(`${API_BASE}/history/stats`, opts)
       .then(r => r.json())
       .then(d => renderStats(body, d))
       .catch(() => { body.innerHTML = '<div class="history-empty">统计加载失败</div>'; });
   } else if (tab === 'detect') {
     body.innerHTML = '<div class="history-empty">加载识别记录…</div>';
-    fetch(`${API_BASE}/history/detections?limit=30`)
+    fetch(`${API_BASE}/history/detections?limit=30`, opts)
       .then(r => r.json())
       .then(d => renderDetections(body, d))
       .catch(() => { body.innerHTML = '<div class="history-empty">识别记录加载失败</div>'; });
   } else if (tab === 'qa') {
     body.innerHTML = '<div class="history-empty">加载问答记录…</div>';
-    fetch(`${API_BASE}/history/qa?limit=30`)
+    fetch(`${API_BASE}/history/qa?limit=30`, opts)
       .then(r => r.json())
       .then(d => renderQa(body, d))
       .catch(() => { body.innerHTML = '<div class="history-empty">问答记录加载失败</div>'; });
@@ -996,18 +1060,28 @@ function renderDetections(body, data) {
     body.innerHTML = '<div class="history-empty">还没有识别记录，去上传一张图片吧 🌾</div>';
     return;
   }
+  window.__detectRecords = records;  // 供“查看明细”按 id 取完整数据
   body.innerHTML = records.map(r => {
     let dets;
     try { dets = JSON.parse(r.detections_json || '[]'); } catch (e) { dets = []; }
     const names = dets.map(d => escapeHTML(d.zh_name || d.name)).join('、') || (r.is_unknown ? '未识别/未知' : '未检出');
     const time = escapeHTML((r.created_at || '').slice(5, 16));
     const badge = r.is_unknown ? '<span class="history-badge history-badge-warn">未知</span>' : '';
+    // 专家复核反馈（仅模糊/失败时给出建设性提示，识别成功不打扰）
+    let expertTip = '';
+    if (r.expert_mark === 'ambiguous') {
+      expertTip = '<div class="history-expert-tip">🔬 本条识别已由植保专家复核：⚠️ 识别模糊，建议重新拍摄更清晰的图片</div>';
+    } else if (r.expert_mark === 'failed') {
+      expertTip = '<div class="history-expert-tip history-expert-tip-warn">🔬 本条识别已由植保专家复核：❌ 未能有效识别，建议补充拍摄细节或咨询当地农技站</div>';
+    }
     return `
       <div class="history-item">
         <div class="history-item-icon">🔍</div>
         <div class="history-item-main">
           <div class="history-item-title">${names} ${badge}</div>
           <div class="history-item-sub">${r.total} 个目标 · ${r.elapsed_ms}ms</div>
+          ${expertTip}
+          <button class="history-detail-btn" onclick="window.__showDetectDetail(${r.id})">查看识别明细 →</button>
         </div>
         <div class="history-item-time">${time}</div>
       </div>
@@ -1022,6 +1096,7 @@ function renderQa(body, data) {
     body.innerHTML = '<div class="history-empty">还没有问答记录，去问一个问题吧 💬</div>';
     return;
   }
+  window.__qaRecords = records;  // 供“查看完整对话”按 id 取完整数据
   body.innerHTML = records.map(r => {
     const q = escapeHTML((r.question || '').slice(0, 40));
     const a = escapeHTML((r.answer || '').replace(/\s+/g, ' ').slice(0, 60));
@@ -1033,12 +1108,69 @@ function renderQa(body, data) {
         <div class="history-item-main">
           <div class="history-item-title">${q} ${llm}</div>
           <div class="history-item-sub">${a}</div>
+          <button class="history-detail-btn" onclick="window.__showQaDetail(${r.id})">查看完整对话 →</button>
         </div>
         <div class="history-item-time">${time}</div>
       </div>
     `;
   }).join('');
 }
+
+// ── 历史详情弹窗（完整对话 / 识别明细） ───────────────────────
+function getDetailOverlay() {
+  let o = document.getElementById('detailOverlay');
+  if (!o) {
+    o = document.createElement('div');
+    o.className = 'detail-overlay';
+    o.id = 'detailOverlay';
+    o.innerHTML = `
+      <div class="detail-panel">
+        <div class="detail-header">
+          <span class="detail-title" id="detailTitle"></span>
+          <button class="detail-close" id="detailClose">&times;</button>
+        </div>
+        <div class="detail-body" id="detailBody"></div>
+      </div>`;
+    document.body.appendChild(o);
+    o.querySelector('#detailClose').onclick = () => { o.style.display = 'none'; };
+    o.addEventListener('click', e => { if (e.target === o) o.style.display = 'none'; });
+  }
+  return o;
+}
+
+window.__showQaDetail = function (id) {
+  const r = (window.__qaRecords || []).find(x => x.id === id);
+  if (!r) return;
+  const o = getDetailOverlay();
+  document.getElementById('detailTitle').textContent = '💬 对话详情';
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-meta">${escapeHTML(r.created_at || '')} · 关联: ${escapeHTML(r.pest_name || '—')} ${r.used_llm ? '<span class="history-badge">AI</span>' : '<span class="history-badge">知识库</span>'}</div>
+    <div class="detail-question">❓ ${escapeHTML(r.question || '')}</div>
+    <div class="detail-answer">${escapeHTML(r.answer || '')}</div>
+  `;
+  o.style.display = 'flex';
+};
+
+window.__showDetectDetail = function (id) {
+  const r = (window.__detectRecords || []).find(x => x.id === id);
+  if (!r) return;
+  let dets = [];
+  try { dets = JSON.parse(r.detections_json || '[]'); } catch (e) {}
+  const o = getDetailOverlay();
+  document.getElementById('detailTitle').textContent = '🔍 识别明细';
+  const list = dets.length
+    ? dets.map(d => `
+      <div class="detail-det-row">
+        <span class="detail-det-name">${escapeHTML(d.zh_name || d.name)}</span>
+        <span class="detail-det-conf">置信度 ${Math.round(d.confidence)}%</span>
+      </div>`).join('')
+    : '<div class="detail-empty">该次未检出害虫</div>';
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-meta">${escapeHTML(r.created_at || '')} · 共 ${r.total} 个目标 · 耗时 ${r.elapsed_ms}ms · ${r.is_unknown ? '<span class="history-badge history-badge-warn">模型判定未知</span>' : '<span class="history-badge">识别正常</span>'}</div>
+    ${list}
+  `;
+  o.style.display = 'flex';
+};
 
 // 绑定历史按钮
 (function initHistory() {

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>专家工作台 - 农作物害虫智能检测系统</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=expert-1" />
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <!-- ═══════ 侧边栏 ═══════ -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-logo">🔬</span>
+      <span class="sidebar-brand-text">专家检验台</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="overview"><i>📊</i>概览</button>
+      <button class="nav-item" data-view="detections"><i>🖼️</i>检测审核</button>
+      <button class="nav-item" data-view="qa"><i>💬</i>问答审核</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="sidebar-btn" onclick="location.href='/app'">← 返回主应用</button>
+      <button class="sidebar-btn sidebar-btn-danger" onclick="doLogout()">退出登录</button>
+    </div>
+  </aside>
+
+  <!-- ═══════ 主内容区 ═══════ -->
+  <main class="admin-main">
+    <header class="admin-header">
+      <h2 class="admin-header-title" id="pageTitle">概览</h2>
+      <div class="admin-header-right">
+        <span class="admin-header-user" id="expertUser"></span>
+        <button class="admin-refresh" onclick="refreshCurrent()">🔄 刷新</button>
+      </div>
+    </header>
+
+    <div class="admin-content">
+
+      <!-- 📊 概览 -->
+      <section id="view-overview" class="admin-view active">
+        <div class="stat-cards" id="expertStatCards"></div>
+        <div class="admin-card">
+          <div class="card-title">🦟 专家标记分布</div>
+          <div id="markDist" class="card-body"></div>
+        </div>
+      </section>
+
+      <!-- 🖼️ 检测审核 -->
+      <section id="view-detections" class="admin-view">
+        <div class="admin-card">
+          <div class="card-title">🖼️ 识别记录审核 <span class="card-sub" id="detectionsCount"></span>
+            <label class="expert-filter">
+              <input type="checkbox" id="onlyUnmarked" onchange="loadDetections()" />
+              <span>仅看未标记</span>
+            </label>
+          </div>
+          <div id="expertDetections" class="card-body"></div>
+        </div>
+      </section>
+
+      <!-- 💬 问答审核 -->
+      <section id="view-qa" class="admin-view">
+        <div class="admin-card">
+          <div class="card-title">💬 用户问答记录 <span class="card-sub" id="qaCount"></span></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>时间</th><th>问题</th><th>回答摘要</th><th>关联害虫</th><th>LLM</th><th>用户</th><th>操作</th></tr></thead>
+              <tbody id="qaBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- 问答详情弹窗 -->
+<div class="admin-modal-overlay" id="qaDetailOverlay" style="display:none;">
+  <div class="admin-modal">
+    <div class="admin-modal-title">💬 完整对话</div>
+    <div class="qa-detail-body" id="qaDetailBody"></div>
+    <div class="admin-modal-actions">
+      <button class="admin-btn" onclick="document.getElementById('qaDetailOverlay').style.display='none'">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const token = sessionStorage.getItem('pest_token');
+  const role = sessionStorage.getItem('pest_role');
+  if (!token || (role !== 'expert' && role !== 'admin')) { location.href = '/login'; return; }
+
+  document.getElementById('expertUser').textContent =
+    '🔬 ' + (sessionStorage.getItem('pest_display') || sessionStorage.getItem('pest_username') || '专家');
+
+  const TITLES = { overview: '概览', detections: '检测审核', qa: '问答审核' };
+  const MARK_LABELS = {
+    success: ['✅ 识别成功', 'mark-ok'],
+    ambiguous: ['⚠️ 识别模糊（置信度低）', 'mark-warn'],
+    failed: ['❌ 识别失败（无虫/未提取）', 'mark-err'],
+  };
+
+  // ── 通用请求 ──────────────────────────────────────────────
+  async function api(path, method = 'GET', body = null) {
+    const headers = { 'Authorization': 'Bearer ' + token };
+    const opts = { method, headers };
+    if (body !== null) { headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    const resp = await fetch(path, opts);
+    if (resp.status === 401 || resp.status === 403) { doLogout(); return null; }
+    return resp.json();
+  }
+
+  function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+  }
+  function markBadge(mark) {
+    if (!mark || !MARK_LABELS[mark]) return '<span class="badge badge-gray">未标记</span>';
+    const [t, c] = MARK_LABELS[mark];
+    return `<span class="badge ${c}">${t}</span>`;
+  }
+
+  // ── 菜单切换（含 view 激活） ───────────────────────────────
+  let currentView = 'overview';
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.admin-view').forEach(v => v.classList.remove('active'));
+      item.classList.add('active');
+      currentView = item.dataset.view;
+      document.getElementById('view-' + currentView).classList.add('active');
+      document.getElementById('pageTitle').textContent = TITLES[currentView];
+      loadView(currentView);
+    });
+  });
+
+  window.refreshCurrent = () => loadView(currentView);
+  const LOADERS = { overview: loadOverview, detections: loadDetections, qa: loadQa };
+  function loadView(v) { if (LOADERS[v]) LOADERS[v](); }
+  window.loadDetections = loadDetections;  // 供 onchange 复选框调用
+
+  // ── 📊 概览 ───────────────────────────────────────────────
+  async function loadOverview() {
+    const d = await api('/expert/overview');
+    if (!d || !d.success) return;
+    const s = d.stats;
+    const cards = [
+      ['识别记录总数', s.total, '🖼️'],
+      ['待审核', s.unmarked, '⏳'],
+      ['标记：成功', s.marked.success, '✅'],
+      ['标记：模糊', s.marked.ambiguous, '⚠️'],
+      ['标记：失败', s.marked.failed, '❌'],
+    ];
+    document.getElementById('expertStatCards').innerHTML = cards.map(c => `
+      <div class="stat-card"><div class="stat-icon">${c[2]}</div><div class="stat-value">${c[1]}</div><div class="stat-label">${c[0]}</div></div>
+    `).join('');
+    const total = s.total || 1;
+    const dist = [
+      ['✅ 识别成功', s.marked.success, '#1e8e3e'],
+      ['⚠️ 识别模糊', s.marked.ambiguous, '#b8860b'],
+      ['❌ 识别失败', s.marked.failed, '#d32f2f'],
+      ['⏳ 待审核', s.unmarked, '#64748b'],
+    ];
+    document.getElementById('markDist').innerHTML = dist.map(([label, count, color]) => `
+      <div class="bar-row"><span class="bar-label">${label}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count / total * 100)}%;background:${color}"></div></div>
+      <span class="bar-val">${count}</span></div>`).join('');
+  }
+
+  // ── 🖼️ 检测审核 ───────────────────────────────────────────
+  async function loadDetections() {
+    const only = document.getElementById('onlyUnmarked').checked;
+    const d = await api('/expert/records/detections?limit=100&only_unmarked=' + only);
+    if (!d || !d.success) return;
+    document.getElementById('detectionsCount').textContent = `共 ${d.records.length} 条` + (only ? '（未标记）' : '');
+    document.getElementById('expertDetections').innerHTML = d.records.map(r => renderDetCard(r)).join('')
+      || '<div class="empty-tip">暂无待审核记录 🎉</div>';
+  }
+
+  function renderDetCard(r) {
+    const dets = [];
+    try { dets.push(...JSON.parse(r.detections_json || '[]')); } catch (e) {}
+    const names = dets.length
+      ? dets.map(x => `${x.zh_name || x.name}(${Math.round(x.confidence)}%)`).join('、')
+      : '—';
+    const conf = dets.length ? Math.round(Math.max(...dets.map(x => x.confidence))) + '%' : '—';
+    const user = r.username ? esc(r.username) : '游客';
+    const suggested = r.auto_suggest ? MARK_LABELS[r.auto_suggest][0] : '';
+    const markInfo = r.expert_mark
+      ? `<div class="mark-info">${markBadge(r.expert_mark)} <span class="mark-by">by ${esc(r.marked_by || '—')} · ${esc(r.marked_at || '')}</span></div>`
+      : '';
+    const note = r.expert_note ? `<div class="mark-note">📝 ${esc(r.expert_note)}</div>` : '';
+    return `
+    <div class="expert-det-card" data-id="${r.id}">
+      <div class="expert-imgs">
+        <div class="expert-img-box">
+          <div class="expert-img-label">原图</div>
+          <img src="${esc(r.original_image || r.image_path)}" loading="lazy" onclick="window.__viewImg(this.src)" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%27150%27 height=%27112%27><rect width=%27100%25%27 height=%27100%25%27 fill=%27%23eef2f6%27/><text x=%2750%25%27 y=%2750%25%27 fill=%27%2394a3b8%27 font-size=%2712%27 text-anchor=%27middle%27 dominant-baseline=%27middle%27>原图缺失</text></svg>'" alt="原图" />
+        </div>
+        <div class="expert-img-box">
+          <div class="expert-img-label">识别结果</div>
+          <img src="${esc(r.image_path)}" loading="lazy" onclick="window.__viewImg(this.src)" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%27150%27 height=%27112%27><rect width=%27100%25%27 height=%27100%25%27 fill=%27%23eef2f6%27/><text x=%2750%25%27 y=%2750%25%27 fill=%27%2394a3b8%27 font-size=%2712%27 text-anchor=%27middle%27 dominant-baseline=%27middle%27>结果图缺失</text></svg>'" alt="结果" />
+        </div>
+      </div>
+      <div class="expert-det-main">
+        <div class="expert-det-head">
+          <span class="expert-id">#${r.id}</span>
+          <span>👤 ${user}</span>
+          <span>🕐 ${esc(r.created_at)}</span>
+          <span>📐 ${r.total} 个目标</span>
+          <span>⏱ ${r.elapsed_ms}ms</span>
+        </div>
+        <div class="expert-det-result">
+          <div><span class="kv-label">识别结果</span><span class="expert-names">${esc(names)}</span></div>
+          <div><span class="kv-label">最高置信度</span><span>${conf}</span></div>
+          <div><span class="kv-label">模型状态</span><span>${r.is_unknown ? '<span class="badge badge-warn">' + esc(r.unknown_type || '未知') + '</span>' : '<span class="badge badge-ok">正常</span>'}</span></div>
+          <div><span class="kv-label">自动建议</span><span class="badge badge-gray">${esc(suggested)}</span></div>
+        </div>
+        ${markInfo}
+        ${note}
+        <div class="expert-mark-row">
+          ${['success', 'ambiguous', 'failed'].map(m => `
+            <button class="admin-btn admin-btn-xs expert-mark-btn" data-mark="${m}" onclick="window.__mark(${r.id}, '${m}')">${MARK_LABELS[m][0]}</button>`).join('')}
+          <input class="expert-note-input" id="note_${r.id}" placeholder="备注（可选）" />
+          <button class="admin-btn admin-btn-xs" onclick="window.__markWithNote(${r.id})">保存</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── 💬 问答审核（摘要展示，点击查看完整对话） ──────────────
+  window.__qaRecords = [];
+  async function loadQa() {
+    const d = await api('/expert/records/qa?limit=100');
+    if (!d || !d.success) return;
+    window.__qaRecords = d.records || [];
+    document.getElementById('qaCount').textContent = `共 ${(d.records || []).length} 条`;
+    document.getElementById('qaBody').innerHTML = (d.records || []).map(r => {
+      const raw = r.answer || '';
+      const aShort = esc(raw.replace(/\s+/g, ' ')).slice(0, 100) + (raw.length > 100 ? '…' : '');
+      return `
+        <tr>
+          <td>${r.id}</td><td>${esc(r.created_at)}</td>
+          <td class="cell-ellipsis" title="${esc(r.question)}">${esc(r.question)}</td>
+          <td class="cell-ellipsis" title="${esc(r.answer)}">${aShort}</td>
+          <td>${esc(r.pest_name || '—')}</td>
+          <td>${r.used_llm ? '<span class="badge badge-ok">LLM</span>' : '<span class="badge badge-gray">本地</span>'}</td>
+          <td>${r.username ? esc(r.username) : '<span class="badge badge-gray">游客</span>'}</td>
+          <td><button class="admin-btn admin-btn-xs" onclick="window.__viewQa(${r.id})">查看</button></td>
+        </tr>`;
+    }).join('') || '<tr><td colspan="8" class="empty-tip">暂无问答记录</td></tr>';
+  }
+
+  window.__viewQa = function (id) {
+    const r = (window.__qaRecords || []).find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('qaDetailBody').innerHTML = `
+      <div class="qa-detail-meta">${esc(r.created_at)} · 用户: ${esc(r.username || '游客')} · 关联: ${esc(r.pest_name || '—')} ${r.used_llm ? '· <b>LLM 生成</b>' : '· 本地知识库'}</div>
+      <div class="qa-detail-question">❓ ${esc(r.question)}</div>
+      <div class="qa-detail-answer">${esc(r.answer)}</div>`;
+    document.getElementById('qaDetailOverlay').style.display = 'flex';
+  };
+
+  // ── 打标操作 ──────────────────────────────────────────────
+  async function doMark(id, mark, note) {
+    const d = await api('/expert/mark/' + id, 'POST', { mark, note });
+    if (!d) return;
+    if (!d.success) { alert(d.detail || '打标失败'); return; }
+    loadDetections();
+  }
+  window.__mark = (id, m) => doMark(id, m, '');
+  window.__markWithNote = (id) => doMark(id, 'success', document.getElementById('note_' + id).value.trim());
+  window.__viewImg = (src) => { window.open(src, '_blank'); };
+
+  // ── 登出 ──────────────────────────────────────────────────
+  window.doLogout = async function () {
+    try { await fetch('/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); } catch (e) {}
+    sessionStorage.removeItem('pest_token'); sessionStorage.removeItem('pest_role');
+    sessionStorage.removeItem('pest_username'); sessionStorage.removeItem('pest_display');
+    sessionStorage.removeItem('pest_guest');
+    location.href = '/login';
+  };
+
+  loadView('overview');
+})();
+</script>
+</body>
+</html>

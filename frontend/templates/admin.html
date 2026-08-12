@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理后台 - 农作物害虫智能检测系统</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=admin-4" />
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <!-- ═══════ 侧边栏 ═══════ -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-logo">🌾</span>
+      <span class="sidebar-brand-text">智能植保管理台</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="overview"><i>📊</i>仪表盘</button>
+      <button class="nav-item" data-view="commits"><i>🕘</i>提交信息</button>
+      <button class="nav-item" data-view="detections"><i>🖼️</i>检测记录</button>
+      <button class="nav-item" data-view="qa"><i>💬</i>问答记录</button>
+      <button class="nav-item" data-view="users"><i>👥</i>用户管理</button>
+      <button class="nav-item" data-view="feedback"><i>🔬</i>专家反馈</button>
+      <button class="nav-item" data-view="system"><i>⚙️</i>系统状态</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="sidebar-btn" onclick="location.href='/app'">← 返回主应用</button>
+      <button class="sidebar-btn sidebar-btn-danger" onclick="doLogout()">退出登录</button>
+    </div>
+  </aside>
+
+  <!-- ═══════ 主内容区 ═══════ -->
+  <main class="admin-main">
+    <header class="admin-header">
+      <h2 class="admin-header-title" id="pageTitle">仪表盘</h2>
+      <div class="admin-header-right">
+        <span class="admin-header-user" id="adminUser"></span>
+        <button class="admin-refresh" onclick="refreshCurrent()">🔄 刷新</button>
+      </div>
+    </header>
+
+    <div class="admin-content">
+
+      <!-- 📊 仪表盘 -->
+      <section id="view-overview" class="admin-view active">
+        <div class="stat-cards" id="statCards"></div>
+        <div class="admin-grid">
+          <div class="admin-card">
+            <div class="card-title">🦟 害虫识别频率 TOP 10</div>
+            <div id="topPests" class="card-body"></div>
+          </div>
+          <div class="admin-card">
+            <div class="card-title">📈 每日检测趋势</div>
+            <div id="dailyTrend" class="card-body"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🕘 提交信息 -->
+      <section id="view-commits" class="admin-view">
+        <div class="admin-card">
+          <div class="card-title">🕘 Git 提交历史 <span class="card-sub" id="commitsCount"></span></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>#</th><th>提交号</th><th>时间</th><th>说明</th></tr></thead>
+              <tbody id="commitsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🖼️ 检测记录 -->
+      <section id="view-detections" class="admin-view">
+        <div class="admin-card">
+          <div class="card-title">🖼️ 检测记录 <span class="card-sub" id="detectionsCount"></span></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>时间</th><th>识别结果</th><th>数量</th><th>耗时(ms)</th><th>状态</th><th>用户</th></tr></thead>
+              <tbody id="detectionsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 💬 问答记录 -->
+      <section id="view-qa" class="admin-view">
+        <div class="admin-card">
+          <div class="card-title">💬 问答记录 <span class="card-sub" id="qaCount"></span></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>时间</th><th>问题</th><th>回答</th><th>关联害虫</th><th>LLM</th><th>用户</th></tr></thead>
+              <tbody id="qaBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 👥 用户管理 -->
+      <section id="view-users" class="admin-view">
+        <div class="admin-card">
+          <div class="card-title">👥 用户列表 <span class="card-sub" id="usersCount"></span>
+            <button class="admin-btn admin-btn-primary" id="addUserBtn" style="margin-left:auto;">＋ 新增用户</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>用户名</th><th>昵称</th><th>角色</th><th>注册时间</th><th>操作</th></tr></thead>
+              <tbody id="usersBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🔬 专家反馈 -->
+      <section id="view-feedback" class="admin-view">
+        <div class="admin-grid">
+          <div class="admin-card">
+            <div class="card-title">🔬 专家标记分布 <span class="card-sub" id="feedbackMarked"></span></div>
+            <div id="feedbackDist" class="card-body"></div>
+          </div>
+          <div class="admin-card">
+            <div class="card-title">🎯 模型薄弱害虫 TOP（被标失败/模糊）</div>
+            <div id="weakPests" class="card-body"></div>
+          </div>
+        </div>
+        <div class="admin-card" style="margin-top:18px;">
+          <div class="card-title">📈 每日打标趋势</div>
+          <div id="feedbackTrend" class="card-body"></div>
+        </div>
+        <div class="admin-card" style="margin-top:18px;">
+          <div class="card-title">📦 难例导出（数据回流） <span class="card-sub">被标记为「识别失败」的记录，可用于补数据/难例挖掘</span>
+            <button class="admin-btn admin-btn-primary" style="margin-left:auto;" id="exportHardBtn">⬇ 导出难例清单</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>标记时间</th><th>原图</th><th>结果图</th><th>专家备注</th><th>用户</th></tr></thead>
+              <tbody id="hardBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ⚙️ 系统状态 -->
+      <section id="view-system" class="admin-view">
+        <div class="admin-grid">
+          <div class="admin-card">
+            <div class="card-title">🧠 模型与后端</div>
+            <div id="healthInfo" class="card-body"></div>
+          </div>
+          <div class="admin-card">
+            <div class="card-title">🧩 增强模块</div>
+            <div id="enhancedInfo" class="card-body"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- 用户新增/编辑弹窗 -->
+<div class="admin-modal-overlay" id="userModalOverlay" style="display:none;">
+  <div class="admin-modal">
+    <div class="admin-modal-title" id="userModalTitle">新增用户</div>
+    <div class="auth-field"><label>用户名</label><input id="muUsername" placeholder="2-20 位，登录用" /></div>
+    <div class="auth-field"><label>密码</label><input id="muPassword" type="password" placeholder="至少 6 位（编辑时留空则不修改）" /></div>
+    <div class="auth-field"><label>昵称</label><input id="muDisplay" placeholder="显示昵称（可选）" /></div>
+    <div class="auth-field"><label>角色</label>
+      <select id="muRole">
+        <option value="user">普通用户</option>
+        <option value="admin">管理员</option>
+        <option value="expert">专家</option>
+      </select>
+    </div>
+    <div class="admin-modal-error" id="userModalError"></div>
+    <div class="admin-modal-actions">
+      <button class="admin-btn" id="userModalCancel">取消</button>
+      <button class="admin-btn admin-btn-primary" id="userModalSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const token = sessionStorage.getItem('pest_token');
+  const role = sessionStorage.getItem('pest_role');
+  if (!token || role !== 'admin') { location.href = '/login'; return; }
+
+  document.getElementById('adminUser').textContent =
+    '👤 ' + (sessionStorage.getItem('pest_display') || sessionStorage.getItem('pest_username') || '管理员');
+
+  const TITLES = {
+    overview: '仪表盘', commits: '提交信息', detections: '检测记录',
+    qa: '问答记录', users: '用户管理', feedback: '专家反馈', system: '系统状态'
+  };
+
+  // ── 通用请求 ──────────────────────────────────────────────
+  async function api(path, method = 'GET', body = null) {
+    const headers = { 'Authorization': 'Bearer ' + token };
+    const opts = { method, headers };
+    if (body !== null) {
+      headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
+    const resp = await fetch(path, opts);
+    if (resp.status === 401 || resp.status === 403) { doLogout(); return null; }
+    return resp.json();
+  }
+
+  function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+  }
+
+  function roleBadge(role) {
+    const map = { admin: ['管理员', 'badge-admin'], user: ['用户', 'badge-user'], expert: ['专家', 'badge-expert'] };
+    const [t, c] = map[role] || [role, ''];
+    return `<span class="role-badge ${c}">${t}</span>`;
+  }
+
+  // ── 菜单切换 ──────────────────────────────────────────────
+  let currentView = 'overview';
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.admin-view').forEach(v => v.classList.remove('active'));
+      item.classList.add('active');
+      currentView = item.dataset.view;
+      document.getElementById('view-' + currentView).classList.add('active');
+      document.getElementById('pageTitle').textContent = TITLES[currentView];
+      loadView(currentView);
+    });
+  });
+
+  window.refreshCurrent = () => loadView(currentView);
+
+  const LOADERS = {
+    overview: loadOverview,
+    commits: loadCommits,
+    detections: loadDetections,
+    qa: loadQa,
+    users: loadUsers,
+    feedback: loadExpertFeedback,
+    system: loadSystem,
+  };
+  function loadView(v) { if (LOADERS[v]) LOADERS[v](); }
+
+  // ── 📊 仪表盘 ─────────────────────────────────────────────
+  async function loadOverview() {
+    const d = await api('/admin/overview');
+    if (!d) return;
+    const cards = [
+      ['检测总数', d.total_detections, '🖼️'],
+      ['问答总数', d.total_qa, '💬'],
+      ['注册用户', d.user_count, '👥'],
+      ['未知识别', d.unknown_count, '❓'],
+      ['内部测试', d.internal_detections, '🧪'],
+    ];
+    document.getElementById('statCards').innerHTML = cards.map(c => `
+      <div class="stat-card"><div class="stat-icon">${c[2]}</div><div class="stat-value">${c[1]}</div><div class="stat-label">${c[0]}</div></div>
+    `).join('');
+
+    // 害虫频率
+    const pests = d.top_pests || [];
+    const maxP = pests.length ? pests[0].count : 1;
+    document.getElementById('topPests').innerHTML = pests.length
+      ? pests.map(p => `
+        <div class="bar-row"><span class="bar-label">${esc(p.name)}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.count / maxP * 100)}%"></div></div>
+        <span class="bar-val">${p.count}</span></div>`).join('')
+      : '<div class="empty-tip">暂无检测记录</div>';
+
+    // 趋势
+    const trend = d.daily_trend || [];
+    const maxT = trend.length ? Math.max(...trend.map(x => x.count)) : 1;
+    document.getElementById('dailyTrend').innerHTML = trend.length
+      ? trend.map(t => `
+        <div class="bar-row"><span class="bar-label">${esc(t.date)}</span>
+        <div class="bar-track"><div class="bar-fill bar-fill-blue" style="width:${Math.round(t.count / maxT * 100)}%"></div></div>
+        <span class="bar-val">${t.count}</span></div>`).join('')
+      : '<div class="empty-tip">暂无趋势数据</div>';
+  }
+
+  // ── 🕘 提交信息 ───────────────────────────────────────────
+  async function loadCommits() {
+    const d = await api('/admin/commits?limit=50');
+    if (!d) return;
+    document.getElementById('commitsCount').textContent = d.success ? `共 ${d.total} 条` : (d.error || '');
+    document.getElementById('commitsBody').innerHTML = (d.commits || []).map((c, i) => `
+      <tr><td>${i + 1}</td><td><code>${esc(c.hash)}</code></td><td>${esc(c.date)}</td><td>${esc(c.subject)}</td></tr>`).join('')
+      || '<tr><td colspan="4" class="empty-tip">暂无提交</td></tr>';
+  }
+
+  // ── 🖼️ 检测记录（管理员全量） ─────────────────────────────
+  async function loadDetections() {
+    const d = await api('/admin/records/detections?limit=100');
+    if (!d || !d.success) return;
+    document.getElementById('detectionsCount').textContent = `共 ${d.records.length} 条`;
+    document.getElementById('detectionsBody').innerHTML = d.records.map(r => {
+      let pests = '';
+      try { pests = JSON.parse(r.detections_json || '[]').map(x => x.zh_name || x.name).join('、') || '—'; } catch (e) { pests = '—'; }
+      const status = r.is_unknown ? '<span class="badge badge-warn">未知</span>' : '<span class="badge badge-ok">正常</span>';
+      const user = r.username ? esc(r.username) : '<span class="badge badge-gray">游客</span>';
+      return `<tr><td>${r.id}</td><td>${esc(r.created_at)}</td><td>${esc(pests)}</td><td>${r.total}</td><td>${r.elapsed_ms}</td><td>${status}</td><td>${user}</td></tr>`;
+    }).join('') || '<tr><td colspan="7" class="empty-tip">暂无记录</td></tr>';
+  }
+
+  // ── 💬 问答记录（管理员全量） ─────────────────────────────
+  async function loadQa() {
+    const d = await api('/admin/records/qa?limit=100');
+    if (!d || !d.success) return;
+    document.getElementById('qaCount').textContent = `共 ${d.records.length} 条`;
+    document.getElementById('qaBody').innerHTML = d.records.map(r => `
+      <tr>
+        <td>${r.id}</td><td>${esc(r.created_at)}</td>
+        <td class="cell-ellipsis" title="${esc(r.question)}">${esc(r.question)}</td>
+        <td class="cell-ellipsis" title="${esc(r.answer)}">${esc(r.answer)}</td>
+        <td>${esc(r.pest_name || '—')}</td>
+        <td>${r.used_llm ? '<span class="badge badge-ok">LLM</span>' : '<span class="badge badge-gray">本地</span>'}</td>
+        <td>${r.username ? esc(r.username) : '<span class="badge badge-gray">游客</span>'}</td>
+      </tr>`).join('') || '<tr><td colspan="7" class="empty-tip">暂无记录</td></tr>';
+  }
+
+  // ── 👥 用户管理（增删改查） ───────────────────────────────
+  let currentUsers = [];
+  let editingUserId = null;
+
+  async function loadUsers() {
+    const d = await api('/admin/users');
+    if (!d || !d.success) return;
+    const users = currentUsers = d.users || [];
+    document.getElementById('usersCount').textContent = `共 ${users.length} 个`;
+    document.getElementById('usersBody').innerHTML = users.map(u => `
+      <tr>
+        <td>${u.id}</td><td>${esc(u.username)}</td><td>${esc(u.display || '—')}</td><td>${roleBadge(u.role)}</td><td>${esc(u.created_at)}</td>
+        <td class="row-actions">
+          <button class="admin-btn admin-btn-xs" onclick="window.__editUser(${u.id})">编辑</button>
+          <button class="admin-btn admin-btn-xs admin-btn-danger" onclick="window.__deleteUser(${u.id})">删除</button>
+        </td>
+      </tr>`).join('')
+      || '<tr><td colspan="6" class="empty-tip">暂无用户</td></tr>';
+  }
+
+  // 弹窗控制
+  const userModal = () => document.getElementById('userModalOverlay');
+  function openUserModal(editing) {
+    editingUserId = editing ? editing.id : null;
+    document.getElementById('userModalTitle').textContent = editing ? '编辑用户' : '新增用户';
+    document.getElementById('muUsername').value = editing ? editing.username : '';
+    document.getElementById('muUsername').disabled = !!editing;   // 用户名不可改
+    document.getElementById('muPassword').value = '';
+    document.getElementById('muDisplay').value = editing ? (editing.display || '') : '';
+    document.getElementById('muRole').value = editing ? editing.role : 'user';
+    document.getElementById('userModalError').textContent = '';
+    userModal().style.display = 'flex';
+  }
+  function closeUserModal() {
+    userModal().style.display = 'none';
+    editingUserId = null;
+    document.getElementById('muUsername').disabled = false;
+  }
+
+  async function saveUser() {
+    const err = document.getElementById('userModalError');
+    err.textContent = '';
+    const username = document.getElementById('muUsername').value.trim();
+    const password = document.getElementById('muPassword').value;
+    const display = document.getElementById('muDisplay').value.trim();
+    const role = document.getElementById('muRole').value;
+
+    if (editingUserId === null) {
+      if (!username || password.length < 6) { err.textContent = '用户名必填，密码至少 6 位'; return; }
+      const d = await api('/admin/users', 'POST', { username, password, role, display });
+      if (!d) return;
+      if (!d.success) { err.textContent = d.detail || '创建失败'; return; }
+    } else {
+      const body = { display, role };
+      if (password) body.password = password;
+      const d = await api('/admin/users/' + editingUserId, 'PUT', body);
+      if (!d) return;
+      if (!d.success) { err.textContent = d.detail || '更新失败'; return; }
+    }
+    closeUserModal();
+    loadUsers();
+  }
+
+  async function deleteUser(id) {
+    const u = currentUsers.find(x => x.id === id);
+    if (!u) return;
+    if (!confirm(`确定删除用户「${u.username}」？\n（其历史记录仍保留）`)) return;
+    const d = await api('/admin/users/' + id, 'DELETE');
+    if (!d) return;
+    if (!d.success) { alert(d.detail || '删除失败'); return; }
+    loadUsers();
+  }
+
+  // 暴露给行内按钮
+  window.__editUser = (id) => openUserModal(currentUsers.find(u => u.id === id));
+  window.__deleteUser = (id) => deleteUser(id);
+
+  // 弹窗事件绑定
+  document.getElementById('addUserBtn').addEventListener('click', () => openUserModal(null));
+  document.getElementById('userModalSave').addEventListener('click', saveUser);
+  document.getElementById('userModalCancel').addEventListener('click', closeUserModal);
+  userModal().addEventListener('click', (e) => { if (e.target === userModal()) closeUserModal(); });
+
+  // ── 🔬 专家反馈（管理台看大方向） ──────────────────────────
+  async function loadExpertFeedback() {
+    const d = await api('/admin/expert-feedback');
+    if (!d || !d.success) return;
+    const marked = d.marked || {};
+    document.getElementById('feedbackMarked').textContent =
+      `成功 ${marked.success} · 模糊 ${marked.ambiguous} · 失败 ${marked.failed} · 待审 ${d.unmarked}`;
+    const total = (marked.success + marked.ambiguous + marked.failed + (d.unmarked || 0)) || 1;
+    const dist = [
+      ['✅ 识别成功', marked.success, '#1e8e3e'],
+      ['⚠️ 识别模糊', marked.ambiguous, '#b8860b'],
+      ['❌ 识别失败', marked.failed, '#d32f2f'],
+      ['⏳ 待审核', d.unmarked, '#64748b'],
+    ];
+    document.getElementById('feedbackDist').innerHTML = dist.map(([label, count, color]) => `
+      <div class="bar-row"><span class="bar-label">${label}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count / total * 100)}%;background:${color}"></div></div>
+      <span class="bar-val">${count}</span></div>`).join('');
+
+    // 薄弱害虫 TOP
+    const weak = d.top_weak_pests || [];
+    const wmax = weak.length ? weak[0].count : 1;
+    document.getElementById('weakPests').innerHTML = weak.length
+      ? weak.map(p => `
+        <div class="bar-row"><span class="bar-label">${esc(p.name)}</span>
+        <div class="bar-track"><div class="bar-fill bar-fill-red" style="width:${Math.round(p.count / wmax * 100)}%"></div></div>
+        <span class="bar-val">${p.count}</span></div>`).join('')
+      : '<div class="empty-tip">暂无被标为失败/模糊的害虫数据</div>';
+
+    // 每日打标趋势
+    const trend = d.daily_trend || [];
+    const tmax = Math.max(...trend.map(t => t.success + t.ambiguous + t.failed), 1);
+    document.getElementById('feedbackTrend').innerHTML = trend.length
+      ? trend.map(t => {
+          const c = t.success + t.ambiguous + t.failed;
+          return `<div class="bar-row"><span class="bar-label">${esc(t.date)}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c / tmax * 100)}%"></div></div>
+          <span class="bar-val">${t.success}✓ ${t.ambiguous}⚠ ${t.failed}✗</span></div>`;
+        }).join('')
+      : '<div class="empty-tip">暂无打标数据</div>';
+
+    // 难例清单 + 导出
+    const h = await api('/admin/exports/hard-examples?limit=50');
+    if (!h || !h.success) return;
+    const records = h.records || [];
+    document.getElementById('hardBody').innerHTML = records.map(r => `
+      <tr><td>${r.id}</td><td>${esc(r.marked_at || r.created_at)}</td>
+      <td>${r.original_image ? `<a href="${esc(r.original_image)}" target="_blank">查看原图</a>` : '—'}</td>
+      <td>${r.image_path ? `<a href="${esc(r.image_path)}" target="_blank">查看结果</a>` : '—'}</td>
+      <td>${esc(r.expert_note || '—')}</td>
+      <td>${r.username ? esc(r.username) : '<span class="badge badge-gray">游客</span>'}</td></tr>`).join('')
+      || '<tr><td colspan="6" class="empty-tip">暂无难例（还没有被标为「识别失败」的记录）</td></tr>';
+    document.getElementById('exportHardBtn').onclick = () => {
+      const payload = { exported_at: new Date().toISOString(), note: '难例集（被专家标记为识别失败），可用于补数据/难例挖掘', records };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'hard-examples.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+  }
+
+  // ── ⚙️ 系统状态 ───────────────────────────────────────────
+  async function loadSystem() {
+    const h = await api('/health');
+    const e = await api('/enhanced/status');
+    if (!h) return;
+    document.getElementById('healthInfo').innerHTML = `
+      <div class="kv-row"><span>后端状态</span><span class="badge ${h.status === 'ok' ? 'badge-ok' : 'badge-warn'}">${esc(h.status)}</span></div>
+      <div class="kv-row"><span>模型</span><span>${esc(h.model || '—')}</span></div>
+      <div class="kv-row"><span>推理引擎</span><span>${e && e.inference_engine ? '✅ 已加载' : '—'}</span></div>
+    `;
+    document.getElementById('enhancedInfo').innerHTML = `
+      <div class="kv-row"><span>语义知识库</span><span>${e && e.semantic_kb ? '✅ 已加载' : '❌ 未加载'}</span></div>
+      <div class="kv-row"><span>AI 防治助手</span><span>${e && e.agent ? '✅ 已加载' : '❌ 未加载'}</span></div>
+      <div class="kv-row"><span>推理引擎</span><span>${e && e.inference_engine ? '✅ 已加载' : '❌ 未加载'}</span></div>
+    `;
+  }
+
+  // ── 登出 ──────────────────────────────────────────────────
+  window.doLogout = async function () {
+    try { await fetch('/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); } catch (e) {}
+    sessionStorage.removeItem('pest_token'); sessionStorage.removeItem('pest_role');
+    sessionStorage.removeItem('pest_username'); sessionStorage.removeItem('pest_display');
+    sessionStorage.removeItem('pest_guest');
+    location.href = '/login';
+  };
+
+  // 初始加载
+  loadView('overview');
+})();
+</script>
+</body>
+</html>

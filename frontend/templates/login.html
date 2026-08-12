@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 - 农作物害虫智能检测系统</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=login-3" />
+</head>
+<body class="auth-body">
+
+  <div class="auth-card auth-card-new">
+
+    <!-- 品牌区（去掉校徽，纯图标） -->
+    <div class="auth-brand">
+      <div class="auth-logo-badge">🌾</div>
+      <h1 class="auth-title">智能植保系统</h1>
+      <p class="auth-subtitle">拍照识虫 · 一键防治</p>
+    </div>
+
+    <!-- 登录方式 Tab -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="password">账号密码</button>
+      <button class="auth-tab" data-tab="phone">手机号</button>
+      <button class="auth-tab" data-tab="wechat">微信</button>
+    </div>
+
+    <!-- ① 账号密码登录 -->
+    <div class="auth-panel active" id="panel-password">
+      <form id="loginForm" autocomplete="off">
+        <div class="auth-field">
+          <label>用户名</label>
+          <input type="text" id="username" placeholder="请输入用户名" autocomplete="username" />
+        </div>
+        <div class="auth-field">
+          <label>密码</label>
+          <input type="password" id="password" placeholder="请输入密码" autocomplete="current-password" />
+        </div>
+        <div class="auth-row">
+          <a href="#" id="forgotLink">忘记密码？</a>
+          <a href="#" id="registerLink">注册账号</a>
+        </div>
+        <div id="loginError" class="auth-error" style="display:none"></div>
+        <button type="submit" class="auth-btn" id="loginBtn">登 录</button>
+      </form>
+    </div>
+
+    <!-- ② 手机号登录（占位，尚未开发完成） -->
+    <div class="auth-panel" id="panel-phone">
+      <button class="auth-btn" onclick="comingSoon()">手机号登录</button>
+      <div class="auth-coming">🚧 手机号登录尚未开发完成，请使用账号密码登录</div>
+    </div>
+
+    <!-- ③ 微信登录（占位，尚未开发完成） -->
+    <div class="auth-panel" id="panel-wechat">
+      <button class="auth-btn auth-btn-wechat" onclick="comingSoon()">微信登录</button>
+      <div class="auth-coming">🚧 微信登录尚未开发完成，请使用账号密码登录</div>
+    </div>
+
+    <!-- 强制登录：不再提供游客体验 -->
+
+    <div class="auth-tip">
+      <div>演示账号 · 普通用户 <code>user/user123</code> · 管理员 <code>admin/admin123</code></div>
+    </div>
+  </div>
+
+  <!-- 注册弹层 -->
+  <div class="auth-modal-overlay" id="registerModal" style="display:none">
+    <div class="auth-modal">
+      <h3 class="auth-modal-title">注册账号</h3>
+      <div class="auth-field"><label>用户名</label><input id="regUsername" placeholder="2-20 位字符" /></div>
+      <div class="auth-field"><label>密码</label><input id="regPassword" type="password" placeholder="至少 6 位" /></div>
+      <div class="auth-field"><label>昵称（可选）</label><input id="regDisplay" placeholder="如何称呼你" /></div>
+      <div id="regError" class="auth-error" style="display:none"></div>
+      <button class="auth-btn" id="regBtn">注 册</button>
+      <button class="auth-btn auth-btn-outline auth-modal-cancel" id="regCancel">取 消</button>
+    </div>
+  </div>
+
+<script>
+(function () {
+  // 按角色分流落地页：管理员→管理后台，专家→专家工作台，普通用户→主应用
+  function landingUrl(role) {
+    if (role === 'admin') return '/admin?v=6';
+    if (role === 'expert') return '/expert?v=6';
+    return '/app?v=6';
+  }
+
+  // 已登录 → 跳对应页面（清除游客标记；带版本号强制绕过旧缓存，防止重定向死循环）
+  const token = sessionStorage.getItem('pest_token');
+  if (token) {
+    sessionStorage.removeItem('pest_guest');
+    location.replace(landingUrl(sessionStorage.getItem('pest_role')));
+    return;
+  }
+
+  const $ = id => document.getElementById(id);
+
+  // ── Tab 切换 ────────────────────────────────────────────
+  document.querySelectorAll('.auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      $('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ── 登录 ────────────────────────────────────────────────
+  const form = $('loginForm');
+  const errorEl = $('loginError');
+  const btn = $('loginBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = $('username').value.trim();
+    const password = $('password').value;
+    if (!username || !password) { showError('请输入用户名和密码'); return; }
+
+    btn.disabled = true; btn.textContent = '登录中...';
+    errorEl.style.display = 'none';
+
+    try {
+      const resp = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) { showError(data.detail || '登录失败'); return; }
+
+      sessionStorage.setItem('pest_token', data.token);
+      sessionStorage.setItem('pest_role', data.role);
+      sessionStorage.setItem('pest_username', data.username);
+      sessionStorage.setItem('pest_display', data.display || data.username);
+      sessionStorage.removeItem('pest_guest');
+
+      location.href = landingUrl(data.role);
+    } catch (err) {
+      showError('网络错误，请稍后重试');
+    } finally {
+      btn.disabled = false; btn.textContent = '登 录';
+    }
+  });
+
+  function showError(msg, el) {
+    el = el || errorEl;
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+  }
+
+  // ── 忘记密码 ────────────────────────────────────────────
+  $('forgotLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    alert('请联系管理员重置密码。\n\n（演示环境可联系：管理员账号 admin）');
+  });
+
+  // ── 注册 ────────────────────────────────────────────────
+  const modal = $('registerModal');
+  const regError = $('regError');
+
+  $('registerLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    regError.style.display = 'none';
+    modal.style.display = 'flex';
+  });
+  $('regCancel').addEventListener('click', () => { modal.style.display = 'none'; });
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+  $('regBtn').addEventListener('click', async () => {
+    const username = $('regUsername').value.trim();
+    const password = $('regPassword').value;
+    const display = $('regDisplay').value.trim();
+    regError.style.display = 'none';
+    if (!username || password.length < 6) {
+      regError.textContent = '用户名必填，密码至少 6 位';
+      regError.style.display = 'block';
+      return;
+    }
+    try {
+      const resp = await fetch('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, display }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        regError.textContent = data.detail || '注册失败';
+        regError.style.display = 'block';
+        return;
+      }
+      alert('注册成功！请登录');
+      modal.style.display = 'none';
+      $('username').value = username;
+      $('password').value = '';
+    } catch (err) {
+      regError.textContent = '网络错误';
+      regError.style.display = 'block';
+    }
+  });
+
+  // ── 尚未开发完成的功能占位提示 ─────────────────────────────
+  window.comingSoon = function () {
+    alert('该功能尚未开发完成，请先使用「账号密码」登录');
+  };
+})();
+</script>
+</body>
+</html>

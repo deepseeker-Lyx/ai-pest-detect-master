@@ -24,8 +24,16 @@
     })();
   </script>
   <title>农作物害虫智能检测系统</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=multi-pest-2" />
+  <link rel="stylesheet" href="/static/css/style.css?v=multi-pest-5" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+  <script>
+    // ⭐ 强制登录：未登录一律跳转登录页（不允许游客免登录使用，防止信息泄露）
+    (function () {
+      if (!sessionStorage.getItem('pest_token')) {
+        location.replace('/login?v=6');
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -40,6 +48,16 @@
     <button class="header-icon-btn" id="historyBtn" title="历史记录">
       <i class="fa-solid fa-chart-column"></i>
     </button>
+    <button class="header-icon-btn" id="expertBtn" title="专家工作台" style="display:none;">
+      <i class="fa-solid fa-microscope"></i>
+    </button>
+    <button class="header-icon-btn" id="adminBtn" title="管理后台" style="display:none;">
+      <i class="fa-solid fa-shield-halved"></i>
+    </button>
+    <button class="header-icon-btn" id="logoutBtn" title="退出登录" style="display:none;">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+    <div class="test-mode-tag" id="testModeTag" style="display:none;" title="内部测试模式：你的识别/问答记录不会计入用户使用统计">🧪 测试模式</div>
     <div class="header-badge">湘 · 智检</div>
   </div>
 </header>
@@ -111,6 +129,6 @@
   <p>© 2026 农作物害虫智能检测系统 &nbsp;|&nbsp; 🌶 守护三湘四水 · 助力湖南农业 &nbsp;|&nbsp; YOLO v11 &nbsp;|&nbsp; <a href="/docs" target="_blank">API 文档</a></p>
 </footer>
 
-<script src="/static/js/app.js?v=multi-pest-2"></script>
+<script src="/static/js/app.js?v=multi-pest-9"></script>
 </body>
 </html>
